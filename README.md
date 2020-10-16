@@ -1,6 +1,9 @@
 # 65C02
 A verilog model of the 65C02 CPU designed to fit in tiny space on FPGA
 
+## Code
+Not yet.
+
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle count. Instead, some
 of the dead cycles were removed.
@@ -14,5 +17,6 @@ of the dead cycles were removed.
 
 In fact, the only redundant cycles are in the implied single byte push/pull instructions (PHA/PLA and friends). 
 These instructions fetch the next opcode, perform the stack access, and then fetch next opcode again.
+
 
 Have fun. 
