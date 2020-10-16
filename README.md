@@ -5,7 +5,7 @@ rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx
 Unlike my previous verilog-6502, this core targets asynchronous memories. 
 
 ## Code
-Not yet.
+Code is not complete. This is a work in progress.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle count. Instead, some
