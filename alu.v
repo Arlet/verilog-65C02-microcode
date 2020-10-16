@@ -22,21 +22,23 @@ module alu(
  *
  * This layer can be optimized to single LUT6 per bit
  * on Spartan6, but that most likely requires manual
- * instantiation.
+ * instantiation. 
  *
  * TODO: half carry output
  * 
  * op   function
  * ---  --------
- * 000   R | M  
- * 001   R & M 
- * 010   R ^ M 
- * 011   R + M 
- * 100   R + 0 
- * 101   R - 1 
- * 110   R - M 
- * 111  ~R & M 
+ * 000   R | M      OR 
+ * 001   R & M      AND
+ * 010   R ^ M      EOR
+ * 011   R + M      ADC
+ * 100   R + 0      R or INC depending on CI
+ * 101   R - 1      R or DEC depending on CI
+ * 110   R - M      SBC/CMP
+ * 111  ~R & M      TRB
  *
+ * NOTE: Carry input is added to each function, so
+ * that LUT5 outputs can go through carry chain logic.
  */ 
 
 reg [8:0] temp;
