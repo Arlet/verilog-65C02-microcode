@@ -1,5 +1,8 @@
 # 65C02
-A verilog model of the 65C02 CPU designed to fit in tiny space on FPGA
+A verilog model of the 65C02 CPU designed to fit in tiny space on FPGA. The code is completely
+rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx Spartan 6.  
+
+Unlike my previous verilog-6502, this core targets asynchronous memories. 
 
 ## Code
 Not yet.
