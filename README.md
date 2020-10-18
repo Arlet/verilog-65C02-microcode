@@ -5,7 +5,8 @@ rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx
 Unlike my previous verilog-6502, this core targets asynchronous memories. 
 
 ## Design goals
-The main design goal is to minimize the slice count. 
+The main design goal is to minimize the slice count.  The first version will probably use a block RAM 
+for microcode. 
 
 ## Code
 Code is not complete. This is a work in progress.
