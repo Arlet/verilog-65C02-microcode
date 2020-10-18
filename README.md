@@ -14,8 +14,6 @@ Code is not complete. This is a work in progress.
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle count. Most of the so-called
 dead cycles have been removed. In some cases, this was too complicated, most notably when doing
-the implied push/pull instructions, such as PHA and PLA. Due to the pipeline, instruction execution
-overlaps with fetch of next byte. In the case of PHA, the next byte is not an operand, but the 
-next instruction, and it is 
+the implied push/pull instructions, such as PHA and PLA. 
 
 Have fun. 
