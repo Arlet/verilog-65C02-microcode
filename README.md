@@ -9,7 +9,13 @@ The main design goal is to minimize the slice count.  The first version will pro
 for microcode. 
 
 ## Code
-Code is not complete. This is a work in progress.
+Code is not complete. This is a work in progress. 
+
+* cpu.v module is the top level. 
+* alu.v implements the ALU
+* abl.v implements the lower 8 bits of the address bus.
+* abh.v implements the upper 8 bits of the address bus.
+* ctl.v does the instruction decoding and generation of all control signals.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle count. Most of the so-called
