@@ -235,7 +235,17 @@ always @(posedge clk)
     if( sync )
         casez( {plp, flags[5]} )
             2'b01 : I <= M[5];          // CLI/SEI 
-            2'b1? : I <= M[1];          // PLP
+            2'b1? : I <= M[2];          // PLP
+        endcase
+
+/*
+ * update D(ecimal) flag
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flags[6]} )
+            2'b01 : D <= M[5];          // CLD/SED 
+            2'b1? : D <= M[3];          // PLP
         endcase
 
 /*
