@@ -16,45 +16,38 @@ input IRQ;              // interrupt request
 input NMI;              // non-maskable interrupt request
 input RDY;              // Ready signal. Pauses CPU when RDY=0
 
-wire [7:0] ABH;                     // address bus high
-wire [7:0] ABL;                     // address bus low
-reg [15:0] PC;                      // program counter
-reg [7:0] AHL;                      // address hold low
+wire [7:0] ABH;                         // address bus high
+wire [7:0] ABL;                         // address bus low
+reg [15:0] PC;                          // program counter
+reg [7:0] AHL;                          // address hold low
 
-assign AB = { ABH, ABL };           // full address bus
-wire [7:0] PCH = PC[15:8];          // PC high byte
-wire [7:0] PCL = PC[7:0];           // PC low byte
+assign AB = { ABH, ABL };               // full address bus
+wire [7:0] PCH = PC[15:8];              // PC high byte
+wire [7:0] PCL = PC[7:0];               // PC low byte
 
 /*
  * databus
  */
-reg [7:0] DO;                       // Data Out
-assign DB = WE ? DO : 8'hzz;        // tri state buffer
-wire [7:0] DBL = DB;                // data bus low (alias for DB)
-
-// processor state
-// wire CO = 0;
-// reg in_irq = 0;
-// reg in_rst = 0;
-// reg in_nmi = 0;
-
-// ALU
-wire [7:0] ALU;
-reg [7:0] M;
+reg [7:0] DO;                           // Data Out
+assign DB = WE ? DO : 8'hzz;            // tri state buffer
+wire [7:0] DBL = DB;                    // data bus low (alias for DB)
+reg [7:0] M;                            // registered value of DB
 
 
 reg [7:0] regs[15:0];                   // register file
 
+/*
 wire [7:0] X = regs[0];                 // for simulator viewing
 wire [7:0] Y = regs[1];                 // for simulator viewing
 wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
+*/
 
 initial begin
-    regs[0] = 2;                        // X = 2
-    regs[1] = 3;                        // Y = 3
-    regs[2] = 8'h41;                    // A
-    regs[3] = 8'hff;                    // S
+    regs[0] = 2;                        // X register 
+    regs[1] = 3;                        // Y register 
+    regs[2] = 8'h41;                    // A register
+    regs[3] = 8'hff;                    // S register
     regs[4] = 8'hfe;                    // IRQ/BRK vector
     regs[5] = 8'h01;                    // for INC
     regs[6] = 8'hff;                    // for DEC
@@ -88,14 +81,14 @@ wire ld_m = ~do_op[0];                  // load enable for M register
  * ALU Signals
  */
 wire alu_co;                            // ALU carry out
-reg [6:0] alu_op;                       // ALU operation
+wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
 reg alu_ci;                             // ALU carry in 
 reg alu_si;                             // ALU shift in
 wire sync;                              // start of new instruction
 wire [7:0] flags;                       // flag control bits
 reg cond;                               // condition code
-reg N, V, D, B, I = 1, Z, C;            // the flags
+reg N, V, D, B, I = 1, Z, C;            // processor status flags 
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
@@ -148,7 +141,7 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( reg_wr < 4 )
-        regs[reg_wr] <= ALU;
+        regs[reg_wr] <= alu_out;
 
 /*
  * M register update
@@ -162,7 +155,7 @@ always @(posedge clk)
  */
 always @(*)
     case( do_op )
-        2'b00:                          DO = ALU;
+        2'b00:                          DO = alu_out;
         2'b01:                          DO = P;
         2'b10:                          DO = PCL;
         2'b11:                          DO = PCH;
@@ -188,7 +181,7 @@ alu alu(
     .R(R),
     .M(M),
     .op(alu_op[4:0]),
-    .OUT(ALU),
+    .OUT(alu_out),
     .CO(alu_co) );
 
 /*
@@ -227,7 +220,7 @@ always @(posedge clk)
     if( sync )
         casez( {plp, flags[4:3]} )
             3'b001 : N <= M[7];         // BIT (bit 7) 
-            3'b011 : N <= ALU[7];       // ALU N flag 
+            3'b011 : N <= alu_out[7];   // ALU N flag 
             3'b1?? : N <= M[7];         // PLP
         endcase
 
@@ -237,7 +230,7 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( {plp, flags[4:3]} )
-            3'b011 : Z <= ~|ALU;        // ALU == 0 
+            3'b011 : Z <= ~|alu_out;    // ALU == 0 
             3'b1?? : Z <= M[1];         // PLP
         endcase
 
@@ -258,6 +251,7 @@ always @(*)
  * mnemonic opcode name
  */
 
+`ifdef SIM
 reg [7:0] IR;
 
 always @(posedge clk)
@@ -367,9 +361,10 @@ always @( posedge clk )
 always @( posedge clk ) begin
       $display( "%4d %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, ctl.control[21:20], ctl.pc,  
-        AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, ALU, alu_co, S, A, X, Y, ctl.control[26:23], C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+        AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y, ctl.control[26:23], C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end
+`endif
 
 endmodule

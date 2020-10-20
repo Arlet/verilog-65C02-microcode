@@ -12,9 +12,9 @@ module ctl(
     output reg WE,
     output [7:0] flags,
     output [6:0] alu_op,
-    output [6:0] dp_op,
-    output reg [1:0] do_op,
-    output reg [12:0] ab_op );
+    output [5:0] dp_op,
+    output [1:0] do_op,
+    output reg [11:0] ab_op );
 
 wire [2:0] adder;
 wire [1:0] shift;
@@ -83,6 +83,7 @@ always @(*)
         4'b1100:                ab_op = 12'b0001_000_0011_0;     // {FF, REG}
         4'b1101: if( DB[7] )    ab_op = 12'bxx10_101_0110_1;     // {AB-1, AB} + DB + 1
                  else           ab_op = 12'bxx10_100_0110_1;     // {AB+0, AB} + DB + 1
+        default:                ab_op = 12'bxxxx_xxx_xxxx_x;
     endcase
 
 endmodule

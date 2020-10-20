@@ -65,6 +65,7 @@ reg [8:0] ADL;
 always @(*)
     case( op[1:0] )
         2'b00: ADL = base + 00  + CI;
+        2'b01: ADL = 9'hx;
         2'b10: ADL = base + ABL + CI;
         2'b11: ADL = base + REG + CI;
     endcase

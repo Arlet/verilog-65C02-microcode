@@ -3,21 +3,28 @@
  *
  * (C) Arlet Ottens <arlet@c-scape.nl> 
  *
+ * This ALU is divided into 2 stages. The first stage ('adder') 
+ * does the logic/arithmetic operations. The second stage ('shifter')
+ * optionally shifts the result from the adder by 1 bit position.
+ *
  */
 module alu( 
     input CI,               // carry in
     input SI,               // shift in
     input [7:0] R,          // input from register file
     input [7:0] M,          // input from memory
-    input [4:0] op,         // operation
+    input [4:0] op,         // 5-bit operation select
     output reg [7:0] OUT,   // data out
-    output CO               // carry out
+    output reg CO           // carry out
 );
 
 /*   
- * Calculate temporary result. The 'R' input will be
- * connected to the register file, while the 'M' input
- * comes from memory.
+ * 1st stage, calculate adder result from the two operands:
+ *
+ * The 'R' input comes from source register in register file.
+ * The 'M' input comes from memory register, holding previous
+ * memory read result. This inputs are hard wired, meaning there
+ * is no mux on the ALU inputs. 
  *
  * This layer can be optimized to single LUT6 per bit
  * on Spartan6, but that most likely requires manual
@@ -25,33 +32,38 @@ module alu(
  *
  * TODO: half carry output
  * 
- * op   function
- * ---  --------
- * 000   R | M      OR 
- * 001   R & M      AND
- * 010   R ^ M      EOR
- * 011   R + M      ADC
- * 100   R + 0      R or INC depending on CI
- * 101   R - 1      R or DEC depending on CI
- * 110   R - M      SBC/CMP
- * 111  ~R & M      TRB
+ *   op      function
+ * ===============================
+ * --000  |  R | M      OR 
+ * --001  |  R & M      AND
+ * --010  |  R ^ M      EOR
+ * --011  |  R + M      ADC (also INC/DEC with suitable R)
+ * --100  |  R + 0      pass R or INC depending on CI
+ * --101  |  R - 1      DEC
+ * --110  |  R - M      SBC/CMP
+ * --111  | ~R & M      TRB
  *
- * NOTE: Carry input is added to each function, so
- * that LUT5 outputs can go through carry chain logic.
+ * NOTE: Carry input is always added to each function. This
+ * is necessary to make it fit in a single LUT. If this is
+ * not desired, make sure to set CI=0.
+ *
+ * Because CI is always added, we need a separate SI input
+ * for the 2nd stage shifter, to make sure we can always 
+ * set CI=0 while rotating with set carry bit.
  */ 
 
-reg [8:0] temp;
+reg [8:0] adder;
 
 always @(*)
     case( op[2:0] )
-        3'b000: temp =  R |  M + CI;
-        3'b001: temp =  R &  M + CI;
-        3'b010: temp =  R ^  M + CI;
-        3'b011: temp =  R +  M + CI;
-        3'b100: temp =  R +  0 + CI;
-        3'b101: temp =  R + ~0 + CI; 
-        3'b110: temp =  R + ~M + CI;
-        3'b111: temp = ~R &  M + CI;
+        3'b000: adder =  R |  M     + CI;
+        3'b001: adder =  R &  M     + CI;
+        3'b010: adder =  R ^  M     + CI;
+        3'b011: adder =  R +  M     + CI;
+        3'b100: adder =  R +  8'h00 + CI;
+        3'b101: adder =  R +  8'hff + CI; 
+        3'b110: adder =  R + ~M     + CI;
+        3'b111: adder = ~R &  M     + CI;
     endcase
 
 /*
@@ -59,20 +71,24 @@ always @(*)
  * optionally shifts to left/right, or discards
  * it entirely and replaces it by 'M' input.
  *
- * op   function
- * ---  --------
- * 00   temp from above
- * 01   M 
- * 10   shift/rotate left
- * 11   shift/rotate right
+ * Note: the adder carry out will be replaced by
+ * the shifter carry out when a shift option is 
+ * selected.
+ * 
+ * op       function
+ * ===============================
+ * 00---  | unmodified adder result
+ * 01---  | bypassed M input
+ * 10---  | adder shift left
+ * 11---  | adder shift right
  */
 
 always @(*)
     case( op[4:3] )
-        2'b00: {CO, OUT} = temp;
+        2'b00: {CO, OUT} = adder;
         2'b01: {CO, OUT} = { 1'b0, M };
-        2'b10: {CO, OUT} = { temp[7:0], SI };
-        2'b11: {OUT, CO} = { SI, temp[7:0] };
+        2'b10: {CO, OUT} = { adder[7:0], SI };
+        2'b11: {OUT, CO} = { SI, adder[7:0] };
     endcase
 
 endmodule
