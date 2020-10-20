@@ -200,13 +200,23 @@ ctl ctl(
  */
 wire plp = flags[2];
 
+/*
+ * the alu_co_1 signal is the ALU carry out, delayed
+ * by one cycle. This is because in RMW instructions
+ * such as ROL, we do an instruction fetch before 
+ * setting the flags, which changes the alu_co.
+ */
+reg alu_co_1; 
+
+always @(posedge clk)
+    alu_co_1 <= alu_co;
+
 always @(posedge clk)
     if( sync )
         casez( {plp, flags[1:0]} )
-            3'b001 : C <= 0;            // CLC
-            3'b010 : C <= 1;            // SEC
+            3'b001 : C <= alu_co_1;     // delayed ALU carry out 
             3'b011 : C <= alu_co;       // ALU carry out
-            3'b1?? : C <= M[0];         // PLP
+            3'b10? : C <= M[0];         // PLP
         endcase
 
 /*

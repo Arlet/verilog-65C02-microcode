@@ -55,6 +55,12 @@ module alu(
 
 reg [8:0] adder;
 
+/*
+ * 8 bit inverted N (when ~M is used in the expression, 
+ * the 9th bit is inverted as well
+ */
+wire [7:0] N = ~M;
+
 always @(*)
     case( op[2:0] )
         3'b000: adder =  R |  M     + CI;
@@ -63,7 +69,7 @@ always @(*)
         3'b011: adder =  R +  M     + CI;
         3'b100: adder =  R +  8'h00 + CI;
         3'b101: adder =  R +  8'hff + CI; 
-        3'b110: adder =  R + ~M     + CI;
+        3'b110: adder =  R +  N     + CI;
         3'b111: adder = ~R &  M     + CI;
     endcase
 
