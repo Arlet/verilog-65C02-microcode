@@ -59,9 +59,6 @@ always @(*)
  * optionally shifts to left/right, or discards
  * it entirely and replaces it by 'M' input.
  *
- * The shifter function uses dedicated carry 
- * in/out signals.
- *
  * op   function
  * ---  --------
  * 00   temp from above
