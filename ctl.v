@@ -70,7 +70,7 @@ assign do_op = control[29:28];
  */
 assign sync = (control[22:21] == 2'b00);
 
-initial
+initial 
     $readmemb( "microcode.hex", microcode, 0 );
 
 reg [8:0] pc;

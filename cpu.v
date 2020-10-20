@@ -36,12 +36,6 @@ reg [7:0] M;                            // registered value of DB
 
 reg [7:0] regs[15:0];                   // register file
 
-/*
-wire [7:0] X = regs[0];                 // for simulator viewing
-wire [7:0] Y = regs[1];                 // for simulator viewing
-wire [7:0] A = regs[2];                 // for simulator viewing
-wire [7:0] S = regs[3];                 // for simulator viewing
-*/
 
 initial begin
     regs[0] = 2;                        // X register 
@@ -235,6 +229,16 @@ always @(posedge clk)
         endcase
 
 /*
+ * update I(nterrupt) flag
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flags[5]} )
+            2'b01 : I <= M[5];          // CLI/SEI 
+            2'b1? : I <= M[1];          // PLP
+        endcase
+
+/*
  * branch condition. Only consider the case for set flags.
  * Inversion is done in the microcode sequencer.
  */
@@ -357,6 +361,11 @@ integer cycle;
 
 always @( posedge clk )
     cycle <= cycle + 1;
+
+wire [7:0] X = regs[0];                 // for simulator viewing
+wire [7:0] Y = regs[1];                 // for simulator viewing
+wire [7:0] A = regs[2];                 // for simulator viewing
+wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       $display( "%4d %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
