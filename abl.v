@@ -1,5 +1,5 @@
 /*
- * abl -- calculates next value of ABL (Address Bus Low)
+ * abl -- outputs ABL (Address Bus Low)
  *
  * (C) Arlet Ottens <arlet@c-scape.nl> 
  *
@@ -18,13 +18,14 @@ module abl(
 );
 
 initial
-    ABL = 8'h00;
+    ABL = 8'h00;            // for testing
 
 /*
  * ABL logic has 2 stages.
  *
- * First stage selects base register from 00,PCL,AHL or DBL
- * second stage adds either REG/ABL.
+ * First stage selects base register from 00, DBL, AHL or PCL 
+ * second stage adds either REG/ABL, or nothing. The carry
+ * input is always added as well.
  */
 
 reg [7:0] base;
@@ -35,18 +36,18 @@ reg [7:0] base;
  *  op  | function
  * =============== 
  * 00-- | 00 
- * 01-- | PCL 
+ * 01-- | DBL
  * 10-- | AHL
- * 11-- | DBL
+ * 11-- | PCL 
  *
  */ 
 
 always @(*)
     case( op[3:2] )
         2'b00: base = 00;
-        2'b01: base = PCL;
+        2'b01: base = DBL;
         2'b10: base = AHL;
-        2'b11: base = DBL;
+        2'b11: base = PCL;
     endcase
 
 /*   
