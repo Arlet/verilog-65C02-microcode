@@ -11,8 +11,7 @@ module alu(
     input [7:0] M,          // input from memory
     input [4:0] op,         // operation
     output reg [7:0] OUT,   // data out
-    output CO,              // carry out (from adder)
-    output SO               // shift out (from shifter)
+    output CO               // carry out
 );
 
 /*   
@@ -55,8 +54,6 @@ always @(*)
         3'b111: temp = ~R &  M + CI;
     endcase
 
-assign CO = temp[8];
-
 /*
  * 2nd stage takes previous result, and
  * optionally shifts to left/right, or discards
@@ -75,10 +72,10 @@ assign CO = temp[8];
 
 always @(*)
     case( op[4:3] )
-        2'b00: {SO, OUT} = { 1'b0, temp };
-        2'b01: {SO, OUT} = { 1'b0, M };
-        2'b10: {SO, OUT} = { temp[7:0], SI };
-        2'b11: {OUT, SO} = { SI, temp[7:0] };
+        2'b00: {CO, OUT} = temp;
+        2'b01: {CO, OUT} = { 1'b0, M };
+        2'b10: {CO, OUT} = { temp[7:0], SI };
+        2'b11: {OUT, CO} = { SI, temp[7:0] };
     endcase
 
 endmodule
