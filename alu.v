@@ -14,6 +14,7 @@ module alu(
     input [7:0] R,          // input from register file
     input [7:0] M,          // input from memory
     input [4:0] op,         // 5-bit operation select
+    output V,               // overflow output
     output reg [7:0] OUT,   // data out
     output reg CO           // carry out
 );
@@ -65,6 +66,11 @@ always @(*)
         3'b110: adder =  R + ~M     + CI;
         3'b111: adder = ~R &  M     + CI;
     endcase
+
+/*
+ * overflow
+ */
+assign V = R[7] ^ M[7] ^ adder[7] ^ adder[8];
 
 /*
  * 2nd stage takes previous result, and

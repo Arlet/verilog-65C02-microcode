@@ -74,6 +74,7 @@ wire ld_m = ~do_op[0];                  // load enable for M register
 /* 
  * ALU Signals
  */
+wire alu_v;                             // ALU overflow output
 wire alu_co;                            // ALU carry out
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
@@ -175,6 +176,7 @@ alu alu(
     .R(R),
     .M(M),
     .op(alu_op[4:0]),
+    .V(alu_v),
     .OUT(alu_out),
     .CO(alu_co) );
 
@@ -246,6 +248,16 @@ always @(posedge clk)
         casez( {plp, flags[6]} )
             2'b01 : D <= M[5];          // CLD/SED 
             2'b1? : D <= M[3];          // PLP
+        endcase
+
+/*
+ * update (o)V(erflow) flag
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flags[7]} )
+            2'b01 : V <= alu_v;
+            2'b1? : V <= M[6];          // PLP
         endcase
 
 /*
