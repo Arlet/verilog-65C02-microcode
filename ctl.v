@@ -5,11 +5,12 @@
  * memory is used for instruction decoding. The opcode is used as the
  * address (with top bit set to 0). The output is a control word that
  * controls both address and ALU logic, as well as the register file
- * addressing, and flag updates. 
+ * addressing, and flag updates. The sequencer has no control logic, 
+ * and no internal register. It simply follows a fixed sequence of 
+ * micro-instructions. Each word contains the address of the next.
  *
  * The other half of the memory is used as a sequencer for multi-cycle
- * instructions. Each control word contains an 8-bit address of the 
- * next word in the sequence. 
+ * instructions. 
  * 
  * Most instructions that operate on memory are divided into two
  * phases. The first phase determines the effective memory address, the
@@ -22,6 +23,14 @@
  * controller jumps to the finish code to do the operations. This allows
  * for a compact representation.
  *
+ * So, for example, the code for LDA ZP points to a finisher that loads ALU
+ * into A register. The code for LDX ZP points to a finisher that loads X 
+ * register instead. Both instructions then follow the same sequence to read
+ * zeropage. 
+ *
+ * In the last cycle of an instruction, we no longer need the next location,
+ * so the 8 address bits are used to select how the processor status flags
+ * are updated.
  *
  * (C) Arlet Ottens <arlet@c-scape.nl> 
  */
@@ -51,7 +60,14 @@ assign dp_op  = control[20:15];
 reg [35:0] microcode[511:0];
 reg [35:0] control;
 
+/* 
+ * operation for DO (data out)
+ */
 assign do_op = control[29:28];
+
+/*
+ * sync indicates when new instruction is decoded
+ */
 assign sync = (control[22:21] == 2'b00);
 
 initial
@@ -60,6 +76,16 @@ initial
 reg [8:0] pc;
 reg [4:0] finish;   // finishing code
 
+/*
+ * The microcontrol 'program counter'.
+ * 
+ * The bits in control[22:21] tell what to do:
+ * 
+ * when 00 -> decode next instruction, form address in bottom 256 words.
+ * when 01 -> jump to next microcode instruction in area 9'h100-9'h17F 
+ * when 10 -> jump to finishing code in area 9'h180-9'h19F.
+ * when 11 -> jump to next, but also save pointer to finishing code
+ */
 always @(*) 
     casez( control[22:21] )
         2'b00:          pc = {1'b0, DB};            // look up next instruction at 000
@@ -67,20 +93,41 @@ always @(*)
         2'b10:          pc = {4'b1100, finish };    // finish code at @180
     endcase
 
+/*
+ * bit 27 contains WE signal for next cycle
+ */
 always @(posedge clk)
     WE <= control[27];
 
+/*
+ * load next control word from ROM
+ */
 always @(posedge clk)
     control <= microcode[pc];
 
+/*
+ * if bit 22 is set, the ALU is not needed in this cycle
+ * so the same bits are used to store location of finisher code
+ */
 always @(posedge clk)
     if( control[22] )
         finish <= control[14:10];
 
+/*
+ * control bits for ALU
+ */
 assign shift = control[14:13];
 assign adder = control[12:10];
 assign ci    = control[9:8];
 
+/*
+ * The ABL/ABH modules need 12 bits of control signals, but only in a limited
+ * number of total options.
+ *
+ * In order to compress those in the control word, the code below expands 
+ * the 4 control bits into 12, optionally taking into account the output
+ * of the conditional branches, and the branch direction (DB[7])
+ */
 
 always @(*)
     case( control[26:23] )    //              IPHF_AHB_ABL_CI
@@ -92,11 +139,11 @@ always @(*)
         4'b0101:                ab_op = 12'bxx10_100_0010_0;     // AB + 0        
         4'b0110:                ab_op = 12'b0010_111_1011_0;     // {DB, AHL+REG}, keep PC
         4'b0111:                ab_op = 12'b0110_010_0011_1;     // {01, SP+1}
-        4'b1000: if( cond )     
+        4'b1000: if( cond )                                      // branch if true 
                     if( DB[7] ) ab_op = 12'bxx10_101_0110_1;     // {AB-1, AB} + DB + 1
                     else        ab_op = 12'bxx10_100_0110_1;     // {AB+0, AB} + DB + 1
                  else           ab_op = 12'bxx10_100_0010_1;     // AB + 1    
-        4'b1001: if( !cond )     
+        4'b1001: if( !cond )                                     // branch if false
                     if( DB[7] ) ab_op = 12'bxx10_101_0110_1;     // {AB-1, AB} + DB + 1
                     else        ab_op = 12'bxx10_100_0110_1;     // {AB+0, AB} + DB + 1
                  else           ab_op = 12'bxx10_100_0010_1;     // AB + 1    
