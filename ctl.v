@@ -5,9 +5,9 @@
  * memory is used for instruction decoding. The opcode is used as the
  * address (with top bit set to 0). The output is a control word that
  * controls both address and ALU logic, as well as the register file
- * addressing, and flag updates. The sequencer has no control logic, 
- * and no internal register. It simply follows a fixed sequence of 
- * micro-instructions. Each word contains the address of the next.
+ * addressing, and flag updates. The sequencer has no conditional 
+ * branches and no internal register file. It simply follows a fixed
+ * sequence of micro-instructions. Each word contains the address of the next.
  *
  * The other half of the memory is used as a sequencer for multi-cycle
  * instructions. 
@@ -26,7 +26,7 @@
  * So, for example, the code for LDA ZP points to a finisher that loads ALU
  * into A register. The code for LDX ZP points to a finisher that loads X 
  * register instead. Both instructions then follow the same sequence to read
- * zeropage. 
+ * zeropage, and then the respective finisher is called.
  *
  * In the last cycle of an instruction, we no longer need the next location,
  * so the 8 address bits are used to select how the processor status flags
