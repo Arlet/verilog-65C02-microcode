@@ -1,5 +1,27 @@
 /*
- * generate control signals
+ * generate control signals for 65C02 core.
+ *
+ * This module is organized around a 512x36 bit memory. Half of the
+ * memory is used for instruction decoding. The opcode is used as the
+ * address (with top bit set to 0). The output is a control word that
+ * controls both address and ALU logic, as well as the register file
+ * addressing, and flag updates. 
+ *
+ * The other half of the memory is used as a sequencer for multi-cycle
+ * instructions. Each control word contains an 8-bit address of the 
+ * next word in the sequence. 
+ * 
+ * Most instructions that operate on memory are divided into two
+ * phases. The first phase determines the effective memory address, the
+ * second (and final) phase performs the operation.
+ *
+ * In order to save space, the ROM has a separate area for the 2nd
+ * phase, called the 'finishing code'. The first cycle of the control
+ * word optionally contains the address of the 'finisher', stored in
+ * 5 bit register 'finish'. After the memory has been addressed, the 
+ * controller jumps to the finish code to do the operations. This allows
+ * for a compact representation.
+ *
  *
  * (C) Arlet Ottens <arlet@c-scape.nl> 
  */
