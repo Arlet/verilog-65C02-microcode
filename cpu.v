@@ -5,7 +5,7 @@
  *
  */
 
-module cpu( clk, RST, AB, DB, WE, IRQ, NMI, RDY );
+module cpu( clk, RST, AB, DB, WE, IRQ, NMI, RDY, debug );
 
 input clk;              // CPU clock
 input RST;              // RST signal
@@ -15,6 +15,7 @@ output WE;              // write enable
 input IRQ;              // interrupt request
 input NMI;              // non-maskable interrupt request
 input RDY;              // Ready signal. Pauses CPU when RDY=0
+input debug;            // debug for simulation
 
 wire [7:0] ABH;                         // address bus high
 wire [7:0] ABL;                         // address bus low
@@ -46,9 +47,9 @@ initial begin
     regs[5]  = 8'h01;                   // for INC
     regs[6]  = 8'hff;                   // for DEC
     regs[7]  = 8'h00;                   // Z register, always zero
-    regs[9]  = 8'hfa;                   // NMI
-    regs[10] = 8'hfc;                   // RST
-    regs[11] = 8'hfe;                   // BRK
+    regs[8]  = 8'hfa;                   // NMI
+    regs[9]  = 8'hfc;                   // RST
+    regs[10] = 8'hfe;                   // BRK
 end
 
 wire [6:0] dp_op;                       //
@@ -86,7 +87,7 @@ reg alu_si;                             // ALU shift in
 wire sync;                              // start of new instruction
 wire [7:0] flags;                       // flag control bits
 reg cond;                               // condition code
-reg N, V, D, B = 1, I = 1, Z, C;        // processor status flags 
+reg N, V, D, B = 1, I, Z, C;            // processor status flags 
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
@@ -188,6 +189,7 @@ alu alu(
  */
 ctl ctl( 
     .clk(clk),
+    .irq(IRQ),
     .reset(RST),
     .cond(cond),
     .sync(sync),
@@ -413,6 +415,7 @@ wire [7:0] N_ = N ? "N" : "-";
 wire [7:0] V_ = V ? "V" : "-";
 wire [7:0] Z_ = Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
+wire [7:0] Q_ = IRQ ? "I" : "-";
 
 integer cycle;
 
@@ -425,10 +428,10 @@ wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
-      //if( cycle > 75000000 )
-      $display( "%4d %s %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, R_, ctl.control[21:20], ctl.pc,  
-        AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y, ctl.control[26:23], C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+      if( !debug || cycle[20:0] == 0 )
+      $display( "%4d %s%s %b.%3h MD:%h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
+      ctl.control[27:24],  AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end
