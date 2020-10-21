@@ -51,6 +51,6 @@ instructions, such as PHA and PLA.
 | (Zero page), Y   |   5    |
 | (Zero page, X)   |   5    |
 
-Add 1 cycle for any read-modify-write 
+Add 1 cycle for any read-modify-write. There is no extra cycle for taken branches, page overflows, or for X/Y offset calculations.
 
 Have fun. 
