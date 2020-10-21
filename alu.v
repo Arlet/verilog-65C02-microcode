@@ -76,7 +76,7 @@ always @(*)
 /*
  * overflow
  */
-assign V = R[7] ^ M[7] ^ adder[7] ^ adder[8];
+assign V = R[7] ^ M[7] ^ adder[7] ^ adder[8] ^ op[2];
 
 /*
  * 2nd stage takes previous result, and
