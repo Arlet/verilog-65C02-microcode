@@ -17,9 +17,16 @@ Code is not complete. This is a work in progress.
 * abh.v implements the upper 8 bits of the address bus.
 * ctl.v does the instruction decoding and generation of all control signals.
 
+## Status
+
+* All NMOS 6502 instructions added, and part of the 65C02 instructions.
+* Model passes Klaus Dormann's test suite for 6502, with BCD disabled.
+* RDY/IRQ/NMI/RST not yet implemented.
+
 ### Cycle counts
-For purpose of minimizing design, I did not keep the original cycle count. Most of the so-called
-dead cycles have been removed. In some cases, this was too complicated, most notably when doing
-the implied push/pull instructions, such as PHA and PLA. 
+For purpose of minimizing design, I did not keep the original cycle
+count. Most of the so-called dead cycles have been removed. In some cases,
+this was too complicated, most notably when doing the implied push/pull
+instructions, such as PHA and PLA.
 
 Have fun. 
