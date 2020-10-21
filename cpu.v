@@ -83,7 +83,7 @@ reg alu_si;                             // ALU shift in
 wire sync;                              // start of new instruction
 wire [7:0] flags;                       // flag control bits
 reg cond;                               // condition code
-reg N, V, D, B, I = 1, Z, C;            // processor status flags 
+reg N, V, D, B = 1, I = 1, Z, C;        // processor status flags 
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
