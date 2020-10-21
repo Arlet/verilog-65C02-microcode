@@ -420,6 +420,7 @@ wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
+      if( cycle > 75000000 )
       $display( "%4d %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, ctl.control[21:20], ctl.pc,  
         AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y, ctl.control[26:23], C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
