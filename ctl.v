@@ -37,25 +37,26 @@
 
 module ctl(
     input clk,
+    input reset,
     output sync,
     input cond,
     input [7:0] DB,
     output reg WE,
     output [7:0] flags,
     output [6:0] alu_op,
-    output [5:0] dp_op,
+    output [6:0] dp_op,
     output [1:0] do_op,
     output reg [11:0] ab_op );
 
 wire [2:0] adder;
 wire [1:0] shift;
 wire [1:0] ci;
-wire [2:0] src;
+wire [3:0] src;
 wire [2:0] dst;
 
 assign flags = control[7:0];
 assign alu_op = { ci, shift, adder };
-assign dp_op  = control[20:15];
+assign dp_op  = control[21:15];
 
 reg [35:0] microcode[511:0];
 reg [35:0] control;
@@ -63,12 +64,12 @@ reg [35:0] control;
 /* 
  * operation for DO (data out)
  */
-assign do_op = control[29:28];
+assign do_op = control[30:29];
 
 /*
  * sync indicates when new instruction is decoded
  */
-assign sync = (control[22:21] == 2'b00);
+assign sync = (control[23:22] == 2'b00);
 
 initial 
     $readmemb( "microcode.hex", microcode, 0 );
@@ -79,7 +80,7 @@ reg [4:0] finish;   // finishing code
 /*
  * The microcontrol 'program counter'.
  * 
- * The bits in control[22:21] tell what to do:
+ * The bits in control[23:22] tell what to do:
  * 
  * when 00 -> decode next instruction, form address in bottom 256 words.
  * when 01 -> jump to next microcode instruction in area 9'h100-9'h17F 
@@ -87,9 +88,11 @@ reg [4:0] finish;   // finishing code
  * when 11 -> jump to next, but also save pointer to finishing code
  */
 always @(*) 
-    casez( control[22:21] )
+    if( reset )
+        pc = 9'h180;
+    else casez( control[23:22] )
         2'b00:          pc = {1'b0, DB};            // look up next instruction at 000
-        2'b?1:          pc = {2'b10, control[6:0]}; // microcode at @100
+        2'b?1:          pc = {1'b1, control[7:0]};  // microcode at @100
         2'b10:          pc = {4'b1010, finish };    // finish code at @140
     endcase
 
@@ -97,7 +100,7 @@ always @(*)
  * bit 27 contains WE signal for next cycle
  */
 always @(posedge clk)
-    WE <= control[27];
+    WE <= control[28];
 
 /*
  * load next control word from ROM
@@ -106,11 +109,11 @@ always @(posedge clk)
     control <= microcode[pc];
 
 /*
- * if bit 22 is set, the ALU is not needed in this cycle
+ * if bit 23 is set, the ALU is not needed in this cycle
  * so the same bits are used to store location of finisher code
  */
 always @(posedge clk)
-    if( control[22] )
+    if( control[23] )
         finish <= control[14:10];
 
 /*
@@ -130,7 +133,7 @@ assign ci    = control[9:8];
  */
 
 always @(*)
-    case( control[26:23] )    //              IPHF_AHB_ABL_CI
+    case( control[27:24] )    //              IPHF_AHB_ABL_CI
         4'b0000:                ab_op = 12'bxx10_100_0010_1;     // AB + 1    
         4'b0001:                ab_op = 12'b1110_000_0111_0;     // {00, DB+REG}    
         4'b0010:                ab_op = 12'bxx00_110_1100_0;     // PC         

@@ -38,19 +38,22 @@ reg [7:0] regs[15:0];                   // register file
 
 
 initial begin
-    regs[0] = 2;                        // X register 
-    regs[1] = 3;                        // Y register 
-    regs[2] = 8'h41;                    // A register
-    regs[3] = 8'hff;                    // S register
-    regs[4] = 8'hfe;                    // IRQ/BRK vector
-    regs[5] = 8'h01;                    // for INC
-    regs[6] = 8'hff;                    // for DEC
-    regs[7] = 8'h00;                    // Z register, always zero
+    regs[0]  = 2;                       // X register 
+    regs[1]  = 3;                       // Y register 
+    regs[2]  = 8'h41;                   // A register
+    regs[3]  = 8'hff;                   // S register
+    regs[4]  = 8'hfe;                   // IRQ/BRK vector
+    regs[5]  = 8'h01;                   // for INC
+    regs[6]  = 8'hff;                   // for DEC
+    regs[7]  = 8'h00;                   // Z register, always zero
+    regs[9]  = 8'hfa;                   // NMI
+    regs[10] = 8'hfc;                   // RST
+    regs[11] = 8'hfe;                   // BRK
 end
 
-wire [5:0] dp_op;                       //
-wire [2:0] reg_wr = dp_op[5:3];         // register file select
-wire [2:0] reg_rd = dp_op[2:0];         // register file select
+wire [6:0] dp_op;                       //
+wire [2:0] reg_wr = dp_op[6:4];         // register file select
+wire [3:0] reg_rd = dp_op[3:0];         // register file select
 wire [7:0] R = regs[reg_rd];            // read register
 
 /*
@@ -185,6 +188,7 @@ alu alu(
  */
 ctl ctl( 
     .clk(clk),
+    .reset(RST),
     .cond(cond),
     .sync(sync),
     .flags(flags),
@@ -408,6 +412,7 @@ wire [7:0] I_ = I ? "I" : "-";
 wire [7:0] N_ = N ? "N" : "-";
 wire [7:0] V_ = V ? "V" : "-";
 wire [7:0] Z_ = Z ? "Z" : "-";
+wire [7:0] R_ = RST ? "R" : "-";
 
 integer cycle;
 
@@ -421,8 +426,8 @@ wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       //if( cycle > 75000000 )
-      $display( "%4d %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, ctl.control[21:20], ctl.pc,  
+      $display( "%4d %s %b.%3h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h AM:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, R_, ctl.control[21:20], ctl.pc,  
         AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y, ctl.control[26:23], C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
