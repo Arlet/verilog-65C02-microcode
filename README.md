@@ -29,4 +29,28 @@ count. Most of the so-called dead cycles have been removed. In some cases,
 this was too complicated, most notably when doing the implied push/pull
 instructions, such as PHA and PLA.
 
+| Instruction type | Cycles |
+| :--------------: | :----: |
+| Implied PHx/PLx  |   3    |
+| Other implied    |   1    |
+| JMP Absolute     |   3    |
+| JMP (Indirect)   |   5    |
+| JSR Absolute     |   5    |
+| RTS              |   4    |
+| RTI              |   5    |
+| BRK              |   7    |
+| branch           |   2    |
+| Immediate        |   2    |
+| Zero page        |   3    |
+| Zero page, X     |   3    |
+| Zero page, Y     |   3    |
+| Absolute         |   4    |
+| Absolute, X      |   4    |
+| Absolute, Y      |   4    |
+| (Zero page)      |   5    |
+| (Zero page), Y   |   5    |
+| (Zero page, X)   |   5    |
+
+Add 1 cycle for any read-modify-write 
+
 Have fun. 
