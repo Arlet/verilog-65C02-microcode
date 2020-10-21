@@ -89,8 +89,8 @@ reg [4:0] finish;   // finishing code
 always @(*) 
     casez( control[22:21] )
         2'b00:          pc = {1'b0, DB};            // look up next instruction at 000
-        2'b?1:          pc = {1'b1, control[7:0]};  // microcode at @100
-        2'b10:          pc = {4'b1100, finish };    // finish code at @180
+        2'b?1:          pc = {2'b10, control[6:0]}; // microcode at @100
+        2'b10:          pc = {4'b1010, finish };    // finish code at @140
     endcase
 
 /*
