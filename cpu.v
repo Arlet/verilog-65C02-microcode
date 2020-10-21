@@ -220,7 +220,15 @@ always @(posedge clk)
         endcase
 
 /*
- * update N(egative) flag
+ * update N(egative) flag and Z(ero) flag
+ *
+ * The N/Z flags share two control bits in flags[4:3]
+ *
+ * 00 - do nothing
+ * 01 - BIT (N <= M7, Z <= alu_out)
+ * 10 - reserved
+ * 11 - N/Z <= alu_out
+ *
  */
 always @(posedge clk)
     if( sync )
@@ -236,9 +244,24 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( {plp, flags[4:3]} )
-            3'b011 : Z <= ~|alu_out;    // ALU == 0 
+            3'b0?1 : Z <= ~|alu_out;    // ALU == 0 
             3'b1?? : Z <= M[1];         // PLP
         endcase
+
+/*
+ * update (o)V(erflow) flag
+ *
+ * For the V flag, we take a peek at NZ flags to see 
+ * if we're doing a BIT.
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flags[7], flags[4:3]} )
+            4'b0101 : V <= M[6];        // BIT
+            4'b01?? : V <= alu_v;
+            4'b1??? : V <= M[6];        // PLP
+        endcase
+
 
 /*
  * update I(nterrupt) flag and D(ecimal) flags
@@ -265,16 +288,6 @@ always @(posedge clk)
             3'b010 : D <= M[5];         // CLD/SED 
           //3'b011 : D <= 0;            // clear D in BRK
             3'b1?0 : D <= M[3];         // PLP
-        endcase
-
-/*
- * update (o)V(erflow) flag
- */
-always @(posedge clk)
-    if( sync )
-        casez( {plp, flags[7]} )
-            2'b01 : V <= alu_v;
-            2'b1? : V <= M[6];          // PLP
         endcase
 
 /*
