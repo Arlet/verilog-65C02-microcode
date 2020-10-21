@@ -241,23 +241,30 @@ always @(posedge clk)
         endcase
 
 /*
- * update I(nterrupt) flag
+ * update I(nterrupt) flag and D(ecimal) flags
+ *
+ * The I/D flags share two control bits in flags[6:5]
+ *
+ * 00 - do nothing
+ * 01 - CLI/SEI
+ * 10 - CLD/SED
+ * 11 - BRK
  */
+
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[5]} )
-            2'b01 : I <= M[5];          // CLI/SEI 
-            2'b1? : I <= M[2];          // PLP
+        casez( {plp, flags[6:5]} )
+            3'b001 : I <= M[5];         // CLI/SEI 
+            3'b011 : I <= 1;            // BRK
+            3'b1?? : I <= M[2];         // PLP
         endcase
 
-/*
- * update D(ecimal) flag
- */
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[6]} )
-            2'b01 : D <= M[5];          // CLD/SED 
-            2'b1? : D <= M[3];          // PLP
+        casez( {plp, flags[6:5]} )
+            3'b010 : D <= M[5];         // CLD/SED 
+          //3'b011 : D <= 0;            // clear D in BRK
+            3'b1?0 : D <= M[3];         // PLP
         endcase
 
 /*
