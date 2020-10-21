@@ -32,13 +32,13 @@ instructions, such as PHA and PLA.
 | Instruction type | Cycles |
 | :--------------: | :----: |
 | Implied PHx/PLx  |   3    |
+| RTS              |   4    |
+| RTI              |   5    |
+| BRK              |   7    |
 | Other implied    |   1    |
 | JMP Absolute     |   3    |
 | JMP (Indirect)   |   5    |
 | JSR Absolute     |   5    |
-| RTS              |   4    |
-| RTI              |   5    |
-| BRK              |   7    |
 | branch           |   2    |
 | Immediate        |   2    |
 | Zero page        |   3    |
