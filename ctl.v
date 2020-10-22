@@ -47,6 +47,8 @@ module ctl(
     output [6:0] alu_op,
     output [6:0] dp_op,
     output [1:0] do_op,
+    input I,
+    output B,
     output reg [11:0] ab_op );
 
 wire [2:0] adder;
@@ -89,11 +91,13 @@ reg [4:0] finish;   // finishing code
  * when 11 -> jump to next, but also save pointer to finishing code
  */
 
+wire take_irq = irq & ~I;
+
 // TODO : use 3-bit control signal instead.
 always @(*) 
     if( reset )
         pc = 9'h180;
-    else casez( {control[23:22], irq} )
+    else casez( {control[23:22], take_irq} )
         3'b000:         pc = {1'b0, DB};            // look up next instruction at @000
         3'b001:         pc = {9'h188};              // take IRQ at @188
         3'b?1?:         pc = {1'b1, control[7:0]};  // microcode at @100
@@ -126,6 +130,13 @@ always @(posedge clk)
 assign shift = control[14:13];
 assign adder = control[12:10];
 assign ci    = control[9:8];
+
+/*
+ * take B from CI control bits. We only care about the 'B'
+ * bit when pushing the status bits to the stack. At that 
+ * time we don't use the ALU carry bits.
+ */
+assign B = control[8];
 
 /*
  * The ABL/ABH modules need 12 bits of control signals, but only in a limited

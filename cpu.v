@@ -87,7 +87,8 @@ reg alu_si;                             // ALU shift in
 wire sync;                              // start of new instruction
 wire [7:0] flags;                       // flag control bits
 reg cond;                               // condition code
-reg N, V, D, B = 1, I, Z, C;            // processor status flags 
+reg N, V, D, I, Z, C;                   // processor status flags 
+wire B;
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
@@ -198,6 +199,8 @@ ctl ctl(
     .dp_op(dp_op),
     .ab_op(ab_op),
     .do_op(do_op),
+    .I(I),
+    .B(B),
     .WE(WE),
     .DB(DB) );
 
@@ -429,7 +432,7 @@ wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       if( !debug || cycle[20:0] == 0 )
-      $display( "%4d %s%s %b.%3h MD:%h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H MD:%h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
       ctl.control[27:24],  AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
