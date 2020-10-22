@@ -20,8 +20,10 @@ Code is not complete. This is a work in progress.
 ## Status
 
 * All NMOS 6502 instructions added, and part of the 65C02 instructions.
-* Model passes Klaus Dormann's test suite for 6502, with BCD disabled.
-* RDY/IRQ/NMI/RST not yet implemented.
+* Model passes Klaus Dormann's test suite for 6502 (with BCD disabled)
+* RST and IRQ implemented.
+* NMI/RDY not yet implemented.
+* BCD support not yet implemented.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle
