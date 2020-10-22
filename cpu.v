@@ -20,7 +20,6 @@ input debug;            // debug for simulation
 wire [7:0] ABH;                         // address bus high
 wire [7:0] ABL;                         // address bus low
 reg [15:0] PC;                          // program counter
-reg [7:0] AHL;                          // address hold low
 
 assign AB = { ABH, ABL };               // full address bus
 wire [7:0] PCH = PC[15:8];              // PC high byte
@@ -100,8 +99,8 @@ abl abl(
     .CI(abl_ci),
     .CO(abl_co),
     .op(abl_op),
+    .ld_ahl(ld_ahl),
     .PCL(PCL),
-    .AHL(AHL),
     .ABL(ABL),
     .DBL(DBL),
     .REG(R)
@@ -120,12 +119,6 @@ abh abh(
     .DBL(DBL)
 );
 
-/*
- * AHL update
- */
-always @(posedge clk)
-    if( ld_ahl )
-        AHL <= DBL;
 
 /*
  * Program Counter update
@@ -434,7 +427,7 @@ always @( posedge clk ) begin
       if( !debug || cycle[20:0] == 0 )
       $display( "%4d %s%s %b.%3H MD:%h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-      ctl.control[27:24],  AB,  DB, AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+      ctl.control[27:24],  AB,  DB, abl.AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end

@@ -9,16 +9,30 @@ module abl(
     input clk,
     input CI,               // carry input
     output CO,              // carry output
-    output reg [7:0] ABL,   // current ABL
     input [7:0] PCL,        // Program Counter low
     input [7:0] DBL,        // Data Bus Low
-    input [7:0] AHL,        // Address Hold low
     input [7:0] REG,        // output from register file
-    input [3:0] op          // operation
+    input [3:0] op,         // operation
+    input ld_ahl,           // indicates whether AHL should be loaded
+    output reg [7:0] ABL,   // current ABL
+    output reg [7:0] AHL    // Address Hold low
 );
 
 initial
     ABL = 8'h00;            // for testing
+
+/*
+ * AHL update. The AHL (Address Hold register) is a temporary
+ * storage for DB input, most notably for use in 16 bit address
+ * fetches, such as in the absolute addressing modes.
+ *
+ * Sometimes the DB has to be held over multiple cycles, such as
+ * for JSR which fetches first operand byte before pushing old
+ * PC to the stack, and then fetches 2nd operand byte.
+ */
+always @(posedge clk)
+    if( ld_ahl )
+        AHL <= DBL;
 
 /*
  * ABL logic has 2 stages.
@@ -38,7 +52,7 @@ reg [7:0] base;
  * 00-- | 00 
  * 01-- | DBL
  * 10-- | AHL
- * 11-- | PCL 
+ * 11-- | PCL
  *
  */ 
 
