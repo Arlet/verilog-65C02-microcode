@@ -83,6 +83,10 @@ wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
 reg alu_ci;                             // ALU carry in 
 reg alu_si;                             // ALU shift in
+
+/*
+ * Flags and flag updates
+ */
 wire sync;                              // start of new instruction
 wire [7:0] flags;                       // flag control bits
 reg cond;                               // condition code
@@ -119,16 +123,21 @@ abh abh(
     .DBL(DBL)
 );
 
-
 /*
- * Program Counter update
+ * Program Counter update. Note that the PC 
+ * is more like a temporary holding register for the 
+ * real program counter that is the AB register. 
+ * The PC is used to hold the current program location
+ * when the AB is used for other data. Also, the PC
+ * is what is pushed to the stack in JSR/BRK/IRQ.
  */
 always @(posedge clk)
     if( ld_pc ) 
         PC <= AB + inc_pc;
 
 /*
- * write register file with ALU output
+ * write register file. New data for any of the 
+ * registers always comes from the ALU output.
  *
  * Registers 4 and up are read-only.
  */
@@ -137,21 +146,24 @@ always @(posedge clk)
         regs[reg_wr] <= alu_out;
 
 /*
- * M register update
+ * M register update. The M register holds the most
+ * recent data on the bus. It feeds into the ALU, 
+ * and also into flag updates.
  */
 always @(posedge clk)
     if( ld_m )
         M <= DB;
 
 /*
- * DO (Data Output) mux
+ * DO (Data Output) mux. The DO value goes out to
+ * the data bus, but only if WE is asserted,
  */
 always @(*)
     case( do_op )
-        2'b00:                          DO = alu_out;
-        2'b01:                          DO = P;
-        2'b10:                          DO = PCL;
-        2'b11:                          DO = PCH;
+        2'b00:          DO = alu_out;
+        2'b01:          DO = P;
+        2'b10:          DO = PCL;
+        2'b11:          DO = PCH;
     endcase
 
 /*
@@ -179,7 +191,7 @@ alu alu(
     .CO(alu_co) );
 
 /*
- * Control
+ * Control. Generates all control signals.
  */
 ctl ctl( 
     .clk(clk),
@@ -275,7 +287,6 @@ always @(posedge clk)
  * 10 - CLD/SED
  * 11 - BRK
  */
-
 always @(posedge clk)
     if( sync )
         casez( {plp, flags[6:5]} )
@@ -296,13 +307,12 @@ always @(posedge clk)
  * branch condition. Only consider the case for set flags.
  * Inversion is done in the microcode sequencer.
  */
-
 always @(*)
     casez( M[7:6] )
-        2'b00:                        cond = N;      // BMI
-        2'b01:                        cond = V;      // BVS
-        2'b10:                        cond = C;      // BCS
-        2'b11:                        cond = Z;      // BEQ
+        2'b00:          cond = N;      // BMI
+        2'b01:          cond = V;      // BVS
+        2'b10:          cond = C;      // BCS
+        2'b11:          cond = Z;      // BEQ
     endcase
 
 /*
