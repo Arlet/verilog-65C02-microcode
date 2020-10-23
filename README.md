@@ -2,7 +2,12 @@
 A verilog model of the 65C02 CPU designed to fit in tiny space on FPGA. The code is completely
 rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx Spartan 6.  
 
-Unlike my previous verilog-6502, this core targets asynchronous memories. 
+Unlike my previous verilog-6502, this core supports both asynchronous and synchronous memories. In order
+to do that, the top-level "AD" signal represents the *next* address. When using external asynchronous memory,
+you should register the "AD" signals on the IO block as follows: ("AB" are the pad names) 
+
+    always @(posedge clock)
+        AB <= AD;
 
 ## Design goals
 The main design goal is to minimize the slice count.  The first version will probably use a block RAM 
