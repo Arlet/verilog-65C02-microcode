@@ -5,34 +5,32 @@
  *
  */
 
-module cpu( clk, RST, AB, DB, WE, IRQ, NMI, RDY, debug );
+module cpu( clk, RST, AD, DI, DO, WE, IRQ, NMI, RDY, debug );
 
 input clk;              // CPU clock
 input RST;              // RST signal
-output [15:0] AB;       // address bus
-inout [7:0] DB;         // data bus
+output [15:0] AD;       // address bus (combinatorial) 
+input [7:0] DI;         // data bus input
+output reg [7:0] DO;    // data bus output 
 output WE;              // write enable
 input IRQ;              // interrupt request
 input NMI;              // non-maskable interrupt request
 input RDY;              // Ready signal. Pauses CPU when RDY=0
 input debug;            // debug for simulation
 
-wire [7:0] ABH;                         // address bus high
-wire [7:0] ABL;                         // address bus low
-reg [15:0] PC;                          // program counter
+wire [7:0] ADH;                         // address bus high
+wire [7:0] ADL;                         // address bus low 
+wire [7:0] PCH;                         // program counter high
+wire [7:0] PCL;                         // program counter low
 
-assign AB = { ABH, ABL };               // full address bus
-wire [7:0] PCH = PC[15:8];              // PC high byte
-wire [7:0] PCL = PC[7:0];               // PC low byte
+assign AD = {ADH, ADL};
 
 /*
  * databus
  */
 reg [7:0] DO;                           // Data Out
-assign DB = WE ? DO : 8'hzz;            // tri state buffer
-wire [7:0] DBL = DB;                    // data bus low (alias for DB)
+wire [7:0] DB = DI;                     // data bus low (alias for DB)
 reg [7:0] M;                            // registered value of DB
-
 
 reg [7:0] regs[15:0];                   // register file
 
@@ -62,6 +60,7 @@ wire [7:0] R = regs[reg_rd];            // read register
 
 wire [11:0] ab_op;
 wire inc_pc = ab_op[11];                // set if PC needs increment
+wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[10];                 // load enable for PC 
 wire ld_ahl = ab_op[9];                 // load enable for AHL
 wire abh_ff = ab_op[8];                 // enable for AHB <= FF (vector page)
@@ -95,6 +94,7 @@ wire B;
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
+
 /*
  * ABL (Address Bus Low) logic
  */
@@ -104,9 +104,12 @@ abl abl(
     .CO(abl_co),
     .op(abl_op),
     .ld_ahl(ld_ahl),
+    .ld_pc(ld_pc),
+    .inc_pc(inc_pc),
+    .pcl_co(pcl_co),
     .PCL(PCL),
-    .ABL(ABL),
-    .DBL(DBL),
+    .ADL(ADL),
+    .DB(DB),
     .REG(R)
 );
 
@@ -118,22 +121,12 @@ abh abh(
     .ff(abh_ff),
     .CI(abh_ci),
     .op(abh_op) ,
-    .ABH(ABH),
+    .ld_pc(ld_pc),
+    .inc_pc(pcl_co),
+    .ADH(ADH),
     .PCH(PCH),
-    .DBL(DBL)
+    .DB(DB)
 );
-
-/*
- * Program Counter update. Note that the PC 
- * is more like a temporary holding register for the 
- * real program counter that is the AB register. 
- * The PC is used to hold the current program location
- * when the AB is used for other data. Also, the PC
- * is what is pushed to the stack in JSR/BRK/IRQ.
- */
-always @(posedge clk)
-    if( ld_pc ) 
-        PC <= AB + inc_pc;
 
 /*
  * write register file. New data for any of the 
@@ -435,9 +428,9 @@ wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       if( !debug || cycle[20:0] == 0 )
-      $display( "%4d %s%s %b.%3H MD:%h AB:%h DB:%h AH:%h DO:%h PC:%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-      ctl.control[27:24],  AB,  DB, abl.AHL,  DO, PC, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+       AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end

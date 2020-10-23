@@ -105,7 +105,7 @@ always @(*)
     endcase
 
 /*
- * bit 27 contains WE signal for next cycle
+ * bit 28 contains WE signal for next cycle
  */
 always @(posedge clk)
     WE <= control[28];
