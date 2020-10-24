@@ -62,8 +62,8 @@ assign flags = control[7:0];
 assign alu_op = { ci, shift, adder };
 assign dp_op  = control[21:15];
 
-reg [35:0] microcode[511:0];
-reg [35:0] control;
+reg [30:0] microcode[511:0];
+reg [30:0] control;
 
 /* 
  * operation for DO (data out)
