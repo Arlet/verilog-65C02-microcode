@@ -48,6 +48,7 @@ module ctl(
     output [6:0] dp_op,
     output [1:0] do_op,
     input I,
+    input D,
     output B,
     output reg [11:0] ab_op );
 
@@ -96,12 +97,12 @@ wire take_irq = irq & ~I;
 // TODO : use 3-bit control signal instead.
 always @(*) 
     if( reset )
-        pc = 9'h180;
+        pc = 9'h160;
     else casez( {control[23:22], take_irq} )
-        3'b000:         pc = {1'b0, DB};            // look up next instruction at @000
-        3'b001:         pc = {9'h188};              // take IRQ at @188
-        3'b?1?:         pc = {1'b1, control[7:0]};  // microcode at @100
-        3'b10?:         pc = {4'b1010, finish };    // finish code at @140
+        3'b000:         pc = {1'b0, DB};                // look up next instruction at @000
+        3'b001:         pc = {9'h168};                  // take IRQ at @168
+        3'b?1?:         pc = {1'b1, D, control[6:0]};   // microcode at @100/@180
+        3'b10?:         pc = {1'b1, D, 2'b10, finish }; // finish code at @140/@1C0
     endcase
 
 /*

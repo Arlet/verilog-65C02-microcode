@@ -201,6 +201,7 @@ ctl ctl(
     .ab_op(ab_op),
     .do_op(do_op),
     .I(I),
+    .D(D),
     .B(B),
     .WE(WE),
     .DB(DB) );
@@ -430,7 +431,7 @@ wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
-      if( !debug || cycle[20:0] == 0 )
+      if( !debug || cycle[10:0] == 0 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h BCD:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
        abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, bcd_ch, bcd_cl,
