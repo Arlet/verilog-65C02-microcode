@@ -15,8 +15,8 @@ module alu(
     input [7:0] M,          // input from memory
     input [4:0] op,         // 5-bit operation select
     output V,               // overflow output
-    output bcd_ch,          // BCD carry out, high nibble
-    output bcd_cl,          // BCD carry out, low nibble
+    output adjh,            // BCD adjust needed, high nibble
+    output adjl,            // BCD adjust needed, low nibble
     output reg [7:0] OUT,   // data out
     output reg CO           // carry out
 );
@@ -74,26 +74,29 @@ always @(*)
     endcase
 
 /*
- * intermediate carry bits. The number indicates 
- * which bit position the carry goes into.
+ * distinguish ADC/SBC, not valid when doing
+ * other operations.
  */
+wire SBC = op[2];
 
-wire C4 = R[4] ^ M[4] ^ adder[4];
-wire C7 = R[7] ^ M[7] ^ adder[7];
-wire C8 = adder[8];
+/*
+ * intermediate borrow/carry bits. The number indicates 
+ * which bit position the borrow or carry goes into.
+ */
+wire BC4 = adder[4] ^ R[4] ^ M[4];
+wire BC7 = adder[7] ^ R[7] ^ M[7];
+wire BC8 = SBC ^ adder[8];
 
 /*
  * overflow
  */
-
-assign V = C7 ^ C8 ^ op[2];
+assign V = BC7 ^ BC8;
 
 /* 
- * BCD carry detection, for each of the 2 nibbles
+ * BCD adjust for each of the 2 nibbles
  */
-
-assign bcd_ch = C8 | adder[7:5] >= 5;
-assign bcd_cl = C4 | adder[3:1] >= 5;
+assign adjl = BC4 | adder[3:1] >= 5;
+assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
 
 /*
  * 2nd stage takes previous result, and

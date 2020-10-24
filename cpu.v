@@ -71,6 +71,7 @@ wire abh_ci = abh_op[2] ? abl_co : abh_op[1];
 
 wire [1:0] do_op;                       // select for Data Output
 wire ld_m = ~do_op[0];                  // load enable for M register
+wire adj_m = do_op[1];                  // use M for BCD adjust
 
 /* 
  * ALU Signals
@@ -81,8 +82,8 @@ wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
 reg alu_ci;                             // ALU carry in 
 reg alu_si;                             // ALU shift in
-wire bcd_ch;                            // BCD carry high
-wire bcd_cl;                            // BCD carry low 
+wire adjh;                              // BCD adjust high
+wire adjl;                              // BCD adjust low 
 
 /*
  * Flags and flag updates
@@ -144,9 +145,13 @@ always @(posedge clk)
  * recent data on the bus. It feeds into the ALU, 
  * and also into flag updates.
  */
+
+wire l = adjl;
+wire h = adjh;
+
 always @(posedge clk)
     if( ld_m )
-        M <= DB;
+        M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
 /*
  * DO (Data Output) mux. The DO value goes out to
@@ -181,8 +186,8 @@ alu alu(
     .M(M),
     .op(alu_op[4:0]),
     .V(alu_v),
-    .bcd_ch(bcd_ch),
-    .bcd_cl(bcd_cl),
+    .adjh(adjh),
+    .adjl(adjl),
     .OUT(alu_out),
     .CO(alu_co) );
 
@@ -225,9 +230,10 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( {plp, flags[1:0]} )
-            3'b001 : C <= alu_co_1;     // delayed ALU carry out 
-            3'b011 : C <= alu_co;       // ALU carry out
-            3'b10? : C <= M[0];         // PLP
+            3'b001 : C <= alu_co_1;             // delayed ALU carry out 
+            3'b010 : C <= alu_co_1 | alu_co;    // BCD carry
+            3'b011 : C <= alu_co;               // ALU carry out
+            3'b10? : C <= M[0];                 // PLP
         endcase
 
 /*
@@ -431,10 +437,11 @@ wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
-      if( !debug || cycle[10:0] == 0 )
-      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h BCD:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      //if( !debug || cycle[10:0] == 0 )
+      if( !debug || cycle > 76000000 )
+      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, bcd_ch, bcd_cl,
+       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, adjh, adjl,
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
