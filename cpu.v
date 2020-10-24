@@ -28,7 +28,6 @@ assign AD = {ADH, ADL};
 /*
  * databus
  */
-reg [7:0] DO;                           // Data Out
 wire [7:0] DB = DI;                     // data bus low (alias for DB)
 reg [7:0] M;                            // registered value of DB
 
@@ -82,6 +81,8 @@ wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
 reg alu_ci;                             // ALU carry in 
 reg alu_si;                             // ALU shift in
+wire bcd_ch;                            // BCD carry high
+wire bcd_cl;                            // BCD carry low 
 
 /*
  * Flags and flag updates
@@ -180,6 +181,8 @@ alu alu(
     .M(M),
     .op(alu_op[4:0]),
     .V(alu_v),
+    .bcd_ch(bcd_ch),
+    .bcd_cl(bcd_cl),
     .OUT(alu_out),
     .CO(alu_co) );
 
@@ -428,9 +431,10 @@ wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       if( !debug || cycle[20:0] == 0 )
-      $display( "%4d %s%s %b.%3H AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h BCD:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, bcd_ch, bcd_cl,
+       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end

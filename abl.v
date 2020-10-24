@@ -13,12 +13,12 @@ module abl(
     input [7:0] REG,        // output from register file
     input [3:0] op,         // operation
     input ld_ahl,           // indicates whether AHL should be loaded
-    input ld_pc,           // indicates whether PCL should be loaded
+    input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
     output pcl_co,          // Carry out from PCL
     output reg [7:0] PCL,   // Program Counter low
     output reg [7:0] AHL,   // Address Hold low
-    output [7:0] ADL        // unregistered version of output
+    output reg [7:0] ADL    // unregistered version of output
 );
 
 reg [7:0] ABL;

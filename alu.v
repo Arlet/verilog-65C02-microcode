@@ -15,6 +15,8 @@ module alu(
     input [7:0] M,          // input from memory
     input [4:0] op,         // 5-bit operation select
     output V,               // overflow output
+    output bcd_ch,          // BCD carry out, high nibble
+    output bcd_cl,          // BCD carry out, low nibble
     output reg [7:0] OUT,   // data out
     output reg CO           // carry out
 );
@@ -31,8 +33,6 @@ module alu(
  * on Spartan6, but that most likely requires manual
  * instantiation. 
  *
- * TODO: half carry output
- * 
  *   op      function
  * ===============================
  * --000  |  R | M      OR 
@@ -74,9 +74,26 @@ always @(*)
     endcase
 
 /*
+ * intermediate carry bits. The number indicates 
+ * which bit position the carry goes into.
+ */
+
+wire C4 = R[4] ^ M[4] ^ adder[4];
+wire C7 = R[7] ^ M[7] ^ adder[7];
+wire C8 = adder[8];
+
+/*
  * overflow
  */
-assign V = R[7] ^ M[7] ^ adder[7] ^ adder[8] ^ op[2];
+
+assign V = C7 ^ C8 ^ op[2];
+
+/* 
+ * BCD carry detection, for each of the 2 nibbles
+ */
+
+assign bcd_ch = C8 | adder[7:5] >= 5;
+assign bcd_cl = C4 | adder[3:1] >= 5;
 
 /*
  * 2nd stage takes previous result, and
