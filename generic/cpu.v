@@ -57,14 +57,14 @@ wire [7:0] R = regs[reg_rd];            // read register
  * Address Bus signals 
  */
 
-wire [11:0] ab_op;
-wire inc_pc = ab_op[11];                // set if PC needs increment
+wire [10:0] ab_op;
+wire inc_pc = ab_op[10];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
-wire ld_pc = ab_op[10];                 // load enable for PC 
-wire ld_ahl = ab_op[9];                 // load enable for AHL
-wire abh_ff = ab_op[8];                 // enable for AHB <= FF (vector page)
-wire [2:0] abh_op = ab_op[7:5];         // ABH operation
-wire [3:0] abl_op = ab_op[4:1];         // ABL operation
+wire ld_pc = ab_op[9];                  // load enable for PC 
+wire ld_ahl = ab_op[8];                 // load enable for AHL
+wire abh_ff = ab_op[7];                 // enable for AHB <= FF (vector page)
+wire [2:0] abh_op = ab_op[6:4];         // ABH operation
+wire [2:0] abl_op = ab_op[3:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
 wire abh_ci = abh_op[2] ? abl_co : abh_op[1];
@@ -437,7 +437,7 @@ wire [7:0] A = regs[2];                 // for simulator viewing
 wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
-      //if( !debug || cycle[10:0] == 0 )
+      if( !debug || cycle[10:0] == 0 )
       //if( !debug || cycle > 76000000 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  

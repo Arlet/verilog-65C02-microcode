@@ -11,7 +11,7 @@ module abl(
     output reg CO,          // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
-    input [3:0] op,         // operation
+    input [2:0] op,         // operation
     input ld_ahl,           // indicates whether AHL should be loaded
     input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
@@ -40,48 +40,54 @@ always @(posedge clk)
  * ABL logic has 2 stages.
  *
  * First stage selects base register from 00, DB, AHL or PCL 
- * second stage adds either REG/ABL, or nothing. The carry
- * input is always added as well.
+ * second stage adds either REG/ABL, zero, or replaces input
+ * by REG. The carry input is always added as well.
+ *
+ * There are a total of 6 useful combinations. First stage examines
+ * all 3 op[] bits, 2nd stage only examines lower two.
+ *
+ * operation  | op[2] | op[1:0] | application
+ * ===========|=======|=========|==================================
+ * PCL + 00   |   x   |   00    | PC restore
+ *    REG     |   x   |   01    | stack access or vector pull 
+ * DB  + ABL  |   0   |   10    | take branch 
+ * 00  + ABL  |   1   |   10    | stay at current or move to next
+ * DB  + REG  |   0   |   11    | zeropage + index
+ * AHL + REG  |   1   |   11    | abs + index
+ * ================================================================
+ * 
  */
 
 reg [7:0] base;
 
 /*   
- * First stage:
- *
- *  op  | function
- * =============== 
- * 00-- | 00 
- * 01-- | DB
- * 10-- | AHL
- * 11-- | PCL
- *
+ * First stage. Select base register.
  */ 
-
 always @(*)
-    case( op[3:2] )
-        2'b00: base = 00;
-        2'b01: base = DB;
-        2'b10: base = AHL;
-        2'b11: base = PCL;
+    casez( op[2:0] )
+        3'b?00: base = PCL;
+        3'b?01: base = 8'hxx;
+        3'b110: base = 00;
+        3'b01?: base = DB;
+        3'b111: base = AHL;
     endcase
 
 /*   
- * Second stage:
+ * Second stage. Add offset.
  *
  *  op  | function
- * =============== 
+ * =====|========= 
  * --00 | base + 00  + CI
+ * --01 |  00  + REG + CI
  * --10 | base + ABL + CI
  * --11 | base + REG + CI
  */
-
 always @(*)
     case( op[1:0] )
-        2'b00: {CO, ADL} = base + 00  + CI;
-        2'b01: {CO, ADL} = 9'hx;
-        2'b10: {CO, ADL} = base + ABL + CI;
-        2'b11: {CO, ADL} = base + REG + CI;
+        2'b00: {CO, ADL} = base  + 8'h00 + CI;
+        2'b01: {CO, ADL} = 8'h00 + REG   + CI;
+        2'b10: {CO, ADL} = base  + ABL   + CI;
+        2'b11: {CO, ADL} = base  + REG   + CI;
     endcase
 
 always @(posedge clk)
