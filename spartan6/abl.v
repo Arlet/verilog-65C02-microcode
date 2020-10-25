@@ -72,20 +72,14 @@ always @(*)
  *  op  | function
  * =============== 
  * --00 | base + 00  + CI
+ * --01 | base + 00  + CI
  * --10 | base + ABL + CI
  * --11 | base + REG + CI
-
-always @(*)
-    case( op[1:0] )
-        2'b0?: {CO, ADL} = base + 00  + CI;
-        //2'b01: {CO, ADL} = 9'hx;
-        2'b10: {CO, ADL} = base + ABL + CI;
-        2'b11: {CO, ADL} = base + REG + CI;
-    endcase
+ *
  */
 
-wire [7:0] P;
-wire [7:0] G;
+wire [7:0] P;       // carry propagate
+wire [7:0] G;       // carry generate
 
 genvar i;
 generate for (i = 0; i < 8; i = i + 1 )

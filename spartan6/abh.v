@@ -26,15 +26,32 @@ reg [7:0] ABH;
  * 110 |  PCH + 00 + CI 
  * 111 |  DB  + 00 + CI
  */ 
+
+wire [7:0] ADD0;
+wire [7:0] ADD1;
+
+add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add0(
+    .I0(ABH),
+    .I1(DB),
+    .I2(PCH),
+    .op(op),
+    .CI(0),
+    .O(ADD0) );
+
+add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add1(
+    .I0(ABH),
+    .I1(DB),
+    .I2(PCH),
+    .op(op),
+    .CI(1),
+    .O(ADD1) );
+
 always @(*)
-    casez( {ff, op} )
-        4'b0100: ADH = ABH   + 8'h00 + CI;
-        4'b0101: ADH = ABH   + 8'hff + CI;
-        4'b0110: ADH = PCH   + 8'h00 + CI;
-        4'b0111: ADH = DB    + 8'h00 + CI;
-        4'b00??: ADH = 8'h00 + 8'h00 + CI;
-        4'b1???: ADH = 8'hff;
-    endcase
+    if( ff )        ADH = 8'hff;
+    else if( CI )   ADH = ADD1;
+    else            ADH = ADD0;
+
+//assign ADH = ADD | (ff ? 8'hFF : 8'h00);
 
 /*
  * register the new value
