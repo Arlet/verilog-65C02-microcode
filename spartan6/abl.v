@@ -16,15 +16,16 @@ module abl(
     input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
     output pcl_co,          // Carry out from PCL
-    output reg [7:0] PCL,   // Program Counter low
-    output reg [7:0] AHL,   // Address Hold low
-    output [7:0] ADL    // unregistered version of output
+    output [7:0] PCL,       // Program Counter low
+    output [7:0] AHL,       // Address Hold low
+    output [7:0] ADL        // unregistered version of output
 );
 
-reg [7:0] ABL;
+wire [7:0] ABL;
+wire [7:0] base;
 
 /*
- * AHL update. The AHL (Address Hold register) is a temporary
+ * AHL register. The AHL (Address Hold Low register) is a temporary
  * storage for DB input, most notably for use in 16 bit address
  * fetches, such as in the absolute addressing modes.
  *
@@ -32,9 +33,13 @@ reg [7:0] ABL;
  * for JSR which fetches first operand byte before pushing old
  * PC to the stack, and then fetches 2nd operand byte.
  */
-always @(posedge clk)
-    if( ld_ahl )
-        AHL <= DB;
+
+reg8 ahl( 
+    .clk(clk),
+    .EN(ld_ahl),
+    .RST(0),
+    .D(DB),
+    .Q(AHL) );
 
 /*
  * ABL logic has 2 stages. First stage selects a base register, 
@@ -53,23 +58,35 @@ always @(posedge clk)
  * ======================================================
  * 
  */
-reg [7:0] base;
 
 /*   
- * First stage. Select base register.
+ * First stage. Select base register. We use this
+ * particular 3 bit encoding to match with the raw
+ * output from the microcode ROM.
+ *
+ *  op   | base
+ * ======|====
+ * 000-- | PCL
+ * 001-- | REG
+ * 010-- | ABL
+ * 011-- | REG
+ * 100-- | ABL
+ * 101-- | REG
+ * 110-- | ABL
+ * 111-- | REG
  */ 
 
-always @(*)
-    case( op[4:2] )
-        3'b000: base = PCL;
-        3'b001: base = REG;
-        3'b010: base = ABL;
-        3'b011: base = REG;
-        3'b100: base = ABL;
-        3'b101: base = REG;
-        3'b110: base = ABL;
-        3'b111: base = REG;
-    endcase
+genvar i;
+generate for (i = 0; i < 8; i = i + 1 )
+LUT6 #(.INIT(64'hccf0ccf0ccf0ccaa)) adl_base_mux(
+    .O(base[i]), 
+    .I0(PCL[i]), 
+    .I1(REG[i]), 
+    .I2(ABL[i]), 
+    .I3(op[2]), 
+    .I4(op[3]), 
+    .I5(op[4]) );
+endgenerate
 
 /*   
  * Second stage. Add offset.
@@ -91,21 +108,40 @@ add8_3 #(.INIT(64'h3c5af0f0c0a00000)) abl_add(
     .op({1'b1,op[1:0]}),
     .O(ADL) );
 
-// adh( .O6(P), .O5(G), .I0(DB), .I1(AHL), .I2(base), .I3(op[0]), .I4(op[1]), .I5(1'b1) );
-
-
-always @(posedge clk)
-	ABL <= ADL;
+// ABL register
+reg8 abl( 
+    .clk(clk),
+    .EN(1),
+    .RST(0),
+    .D(ADL),
+    .Q(ABL) );
 
 /*
  * update PCL (program counter low)
+ * 
+ * We either copy ABL into PCL, or ABL+1 
  */
-wire [8:0] PCL1 = ABL + inc_pc;
+//wire [8:0] PCL1 = ABL + inc_pc;
 
-assign pcl_co = PCL1[8];
+wire [7:0] PCL1;
 
-always @(posedge clk)
-    if( ld_pc )
-        PCL <= PCL1;
+add8_3 #(.INIT(64'haaaaaaaa00000000)) pcl_inc(
+    .CI(inc_pc),
+    .CO(pcl_co),
+    .I0(ABL),
+    .I1(0),
+    .I2(0),
+    .op(3'b100),
+    .O(PCL1) );
+
+//assign pcl_co = PCL1[8];
+
+// PCL register
+reg8 pcl( 
+    .clk(clk),
+    .EN(ld_pc),
+    .RST(0),
+    .D(PCL1),
+    .Q(PCL) );
 
 endmodule
