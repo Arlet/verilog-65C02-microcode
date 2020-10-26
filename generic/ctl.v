@@ -43,7 +43,7 @@ module ctl(
     input cond,
     input [7:0] DB,
     output reg WE,
-    output [7:0] flags,
+    output [9:0] flags,
     output [6:0] alu_op,
     output [6:0] dp_op,
     output [1:0] do_op,
@@ -58,7 +58,7 @@ wire [1:0] ci;
 wire [3:0] src;
 wire [2:0] dst;
 
-assign flags = control[7:0];
+assign flags = {control[30:29], control[7:0]};
 assign alu_op = { ci, shift, adder };
 assign dp_op  = control[21:15];
 

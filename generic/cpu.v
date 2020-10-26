@@ -89,7 +89,7 @@ wire adjl;                              // BCD adjust low
  * Flags and flag updates
  */
 wire sync;                              // start of new instruction
-wire [7:0] flags;                       // flag control bits
+wire [9:0] flags;                       // flag control bits
 reg cond;                               // condition code
 reg N, V, D, I, Z, C;                   // processor status flags 
 wire B;
@@ -150,7 +150,9 @@ wire l = adjl;
 wire h = adjh;
 
 always @(posedge clk)
-    if( ld_m )
+    if( sync )
+        M <= DB;
+    else if( ld_m )
         M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
 /*
@@ -268,17 +270,13 @@ always @(posedge clk)
 /*
  * update (o)V(erflow) flag
  *
- * For the V flag, we take a peek at NZ flags to see 
- * if we're doing a BIT.
  */
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[7], flags[4:3]} )
-            4'b0101 : V <= M[6];        // BIT
-            4'b01?? : V <= alu_v;
-            4'b1??? : V <= M[6];        // PLP
+        case( flags[8:7] )
+            2'b01 : V <= alu_v;
+            2'b11 : V <= M[6];        // BIT/PLP
         endcase
-
 
 /*
  * update I(nterrupt) flag and D(ecimal) flags
