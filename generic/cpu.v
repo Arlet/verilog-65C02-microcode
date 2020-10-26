@@ -61,13 +61,12 @@ wire [12:0] ab_op;
 wire inc_pc = ab_op[12];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[11];                 // load enable for PC 
-wire ld_ahl = ab_op[10];                 // load enable for AHL
-wire abh_ff = ab_op[9];                 // enable for AHB <= FF (vector page)
-wire [2:0] abh_op = ab_op[8:6];         // ABH operation
+wire ld_ahl = ab_op[10];                // load enable for AHL
+wire [3:0] abh_op = ab_op[9:6];         // ABH operation
 wire [4:0] abl_op = ab_op[5:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
-wire abh_ci = abh_op[2] ? abl_co : abh_op[1];
+wire abh_ci = abl_co;
 
 wire [1:0] do_op;                       // select for Data Output
 wire ld_m = ~do_op[0];                  // load enable for M register
@@ -120,7 +119,6 @@ abl abl(
  */
 abh abh(
     .clk(clk),
-    .ff(abh_ff),
     .CI(abh_ci),
     .op(abh_op) ,
     .ld_pc(ld_pc),
@@ -245,16 +243,16 @@ always @(posedge clk)
  *
  * 00 - do nothing
  * 01 - BIT (N <= M7, Z <= alu_out)
- * 10 - reserved
+ * 10 - PLP
  * 11 - N/Z <= alu_out
  *
  */
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[4:3]} )
-            3'b001 : N <= M[7];         // BIT (bit 7) 
-            3'b011 : N <= alu_out[7];   // ALU N flag 
-            3'b1?? : N <= M[7];         // PLP
+        casez( flags[4:3] )
+            2'b01 : N <= M[7];         // BIT (bit 7) 
+            2'b10 : N <= M[7];         // PLP
+            2'b11 : N <= alu_out[7];   // ALU N flag 
         endcase
 
 /*
@@ -262,9 +260,10 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[4:3]} )
-            3'b0?1 : Z <= ~|alu_out;    // ALU == 0 
-            3'b1?? : Z <= M[1];         // PLP
+        casez( flags[4:3] )
+            2'b01 : Z <= ~|(R & M);    // BIT  
+            2'b10 : Z <= M[1];         // PLP
+            2'b11 : Z <= ~|alu_out;    // ALU == 0 
         endcase
 
 /*
@@ -436,7 +435,7 @@ wire [7:0] S = regs[3];                 // for simulator viewing
 
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
-      //if( !debug || cycle > 76000000 )
+      //if( !debug || cycle > 77600000 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
        abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, adjh, adjl,
