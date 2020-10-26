@@ -57,14 +57,14 @@ wire [7:0] R = regs[reg_rd];            // read register
  * Address Bus signals 
  */
 
-wire [10:0] ab_op;
-wire inc_pc = ab_op[10];                // set if PC needs increment
+wire [11:0] ab_op;
+wire inc_pc = ab_op[11];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
-wire ld_pc = ab_op[9];                  // load enable for PC 
-wire ld_ahl = ab_op[8];                 // load enable for AHL
-wire abh_ff = ab_op[7];                 // enable for AHB <= FF (vector page)
-wire [2:0] abh_op = ab_op[6:4];         // ABH operation
-wire [2:0] abl_op = ab_op[3:1];         // ABL operation
+wire ld_pc = ab_op[10];                 // load enable for PC 
+wire ld_ahl = ab_op[9];                 // load enable for AHL
+wire abh_ff = ab_op[8];                 // enable for AHB <= FF (vector page)
+wire [2:0] abh_op = ab_op[7:5];         // ABH operation
+wire [3:0] abl_op = ab_op[4:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
 wire abh_ci = abh_op[2] ? abl_co : abh_op[1];

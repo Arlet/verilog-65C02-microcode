@@ -11,7 +11,7 @@ module abl(
     output CO,              // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
-    input [2:0] op,         // operation
+    input [3:0] op,         // operation
     input ld_ahl,           // indicates whether AHL should be loaded
     input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
@@ -37,39 +37,34 @@ always @(posedge clk)
         AHL <= DB;
 
 /*
- * ABL logic has 2 stages.
+ * ABL logic has 2 stages. First stage selects a base register, 
+ * 2nd stage adds an offset.
  *
- * First stage selects base register from 00, DB, AHL or PCL 
- * second stage adds either REG/ABL, zero, or replaces input
- * by REG. The carry input is always added as well.
+ * There are a total of 6 useful combinations. 
  *
- * There are a total of 6 useful combinations. First stage examines
- * all 3 op[] bits, 2nd stage only examines lower two.
- *
- * operation  | op[2] | op[1:0] | application
- * ===========|=======|=========|==================================
- * PCL + 00   |   x   |   00    | PC restore
- *    REG     |   x   |   01    | stack access or vector pull 
- * DB  + ABL  |   0   |   10    | take branch 
- * 00  + ABL  |   1   |   10    | stay at current or move to next
- * DB  + REG  |   0   |   11    | zeropage + index
- * AHL + REG  |   1   |   11    | abs + index
+ * operation  | op[3:2] | op[1:0] | application
+ * ===========|=========|=========|==================================
+ * PCL + 00   |   00    |   00    | PC restore
+ * REG + 00   |   01    |   01    | stack access or vector pull 
+ * ABL + DB   |   10    |   10    | take branch 
+ * ABL + 00   |   10    |   01    | stay at current or move to next
+ * REG + DB   |   01    |   10    | zeropage + index
+ * REG + AHL  |   01    |   11    | abs + index
  * ================================================================
  * 
  */
-
 reg [7:0] base;
 
 /*   
  * First stage. Select base register.
  */ 
+
 always @(*)
-    casez( op[2:0] )
-        3'b?00: base = PCL;
-        3'b?01: base = 8'hxx;
-        3'b110: base = 00;
-        3'b01?: base = DB;
-        3'b111: base = AHL;
+    case( op[3:2] )
+        2'b00: base = PCL;
+        2'b01: base = REG;
+        2'b10: base = ABL;
+        2'b11: base = 8'hxx;
     endcase
 
 /*   
@@ -78,19 +73,22 @@ always @(*)
  *  op  | function
  * =====|========= 
  * --00 | base + 00  + CI
- * --01 |  00  + REG + CI
- * --10 | base + ABL + CI
- * --11 | base + REG + CI
+ * --01 | base + 00  + CI
+ * --10 | base + DB  + CI
+ * --11 | base + AHL + CI
  */
 
-add8_3 #(.INIT(64'h3c5accf0c0a00000)) abl_add(
+add8_3 #(.INIT(64'h3c5af0f0c0a00000)) abl_add( 
     .CI(CI),
     .CO(CO),
-    .I0(ABL),
-    .I1(REG),
+    .I0(DB),
+    .I1(AHL),
     .I2(base),
     .op({1'b1,op[1:0]}),
     .O(ADL) );
+
+// adh( .O6(P), .O5(G), .I0(DB), .I1(AHL), .I2(base), .I3(op[0]), .I4(op[1]), .I5(1'b1) );
+
 
 always @(posedge clk)
 	ABL <= ADL;
