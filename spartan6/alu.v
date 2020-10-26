@@ -53,26 +53,16 @@ module alu(
  * set CI=0 while rotating with set carry bit.
  */ 
 
-reg [8:0] adder;
+wire [7:0] add;
+wire [7:0] carry;
 
-/*
- * 8 bit inverted version of M and R (to avoid creating
- * 9 bit expressions)(when ~M is used in the expression, 
- */
-wire [7:0] NM = ~M;
-wire [7:0] NR = ~R;
-
-always @(*)
-    case( op[2:0] )
-        3'b000: adder = (R | M)     + CI;
-        3'b001: adder = (R & M)     + CI;
-        3'b010: adder = (R ^ M)     + CI;
-        3'b011: adder = (R + M)     + CI;
-        3'b100: adder = (R + 8'h00) + CI;
-        3'b101: adder = (R + 8'hff) + CI; 
-        3'b110: adder = (R + NM)    + CI;
-        3'b111: adder = (M & NR)    + CI;
-    endcase
+add8_2 #(.INIT(64'h293c668e04c08000)) alu_adder (
+    .CI(CI),
+    .I0(M),
+    .I1(R),
+    .op(op),
+    .O(add),
+    .CARRY(carry) );
 
 /*
  * distinguish ADC/SBC, not valid when doing
@@ -84,20 +74,31 @@ wire SBC = op[2];
  * intermediate borrow/carry bits. The number indicates 
  * which bit position the borrow or carry goes into.
  */
-wire BC4 = adder[4] ^ R[4] ^ M[4];
-wire BC7 = adder[7] ^ R[7] ^ M[7];
-wire BC8 = SBC ^ adder[8];
+wire BC4 = SBC ^ carry[3];
+wire BC8 = SBC ^ carry[7];
 
 /*
  * overflow
  */
-assign V = BC7 ^ BC8;
+assign V = carry[6] ^ carry[7];
+
+/*
+ * decimal half carry, is set when lower nibble is >= 10
+ */
+wire DHC = (add[3] & (add[2] | add[1]));
+
+/*
+ * decimal carry is set when upper nibble is >= 10
+ * and also when upper nibble is 9, and we expect
+ * the +6 lower nibble adjustment to generate a carry
+ */
+wire DC = (add[7] & (add[6] | add[5] | (add[4] & DHC)));
 
 /* 
  * BCD adjust for each of the 2 nibbles
  */
-assign adjl = BC4 | adder[3:1] >= 5;
-assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
+assign adjl = BC4 | DHC;
+assign adjh = BC8 | DC;
 
 /*
  * 2nd stage takes previous result, and
@@ -118,10 +119,10 @@ assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
 
 always @(*)
     case( op[4:3] )
-        2'b00: {CO, OUT} = adder;
+        2'b00: {CO, OUT} = { carry[7], add };
         2'b01: {CO, OUT} = { 1'b0, M };
-        2'b10: {CO, OUT} = { adder[7:0], SI };
-        2'b11: {OUT, CO} = { SI, adder[7:0] };
+        2'b10: {CO, OUT} = { add, SI };
+        2'b11: {OUT, CO} = { SI, add };
     endcase
 
 endmodule

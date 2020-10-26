@@ -61,13 +61,12 @@ wire [12:0] ab_op;
 wire inc_pc = ab_op[12];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[11];                 // load enable for PC 
-wire ld_ahl = ab_op[10];                 // load enable for AHL
-wire abh_ff = ab_op[9];                 // enable for AHB <= FF (vector page)
-wire [2:0] abh_op = ab_op[8:6];         // ABH operation
+wire ld_ahl = ab_op[10];                // load enable for AHL
+wire [3:0] abh_op = ab_op[9:6];         // ABH operation
 wire [4:0] abl_op = ab_op[5:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
-wire abh_ci = abh_op[2] ? abl_co : abh_op[1];
+wire abh_ci = abl_co;                   // ABH carry in
 
 wire [1:0] do_op;                       // select for Data Output
 wire ld_m = ~do_op[0];                  // load enable for M register
@@ -120,7 +119,6 @@ abl abl(
  */
 abh abh(
     .clk(clk),
-    .ff(abh_ff),
     .CI(abh_ci),
     .op(abh_op) ,
     .ld_pc(ld_pc),

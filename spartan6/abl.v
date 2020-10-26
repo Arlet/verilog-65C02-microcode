@@ -108,7 +108,11 @@ add8_3 #(.INIT(64'h3c5af0f0c0a00000)) abl_add(
     .op({1'b1,op[1:0]}),
     .O(ADL) );
 
-// ABL register
+/* 
+ * ABL register
+ *
+ * ABL <= ADL
+ */ 
 reg8 abl( 
     .clk(clk),
     .EN(1),
@@ -119,9 +123,9 @@ reg8 abl(
 /*
  * update PCL (program counter low)
  * 
- * We either copy ABL into PCL, or ABL+1 
+ * if( ld_pc )
+ *     PCL <= ABL + inc_pc
  */
-//wire [8:0] PCL1 = ABL + inc_pc;
 
 wire [7:0] PCL1;
 
@@ -134,9 +138,9 @@ add8_3 #(.INIT(64'haaaaaaaa00000000)) pcl_inc(
     .op(3'b100),
     .O(PCL1) );
 
-//assign pcl_co = PCL1[8];
-
-// PCL register
+/* 
+ * PCL register
+ */
 reg8 pcl( 
     .clk(clk),
     .EN(ld_pc),
