@@ -151,7 +151,7 @@ assign B = control[8];
 wire [2:0] abl_sel = control[26:24];
 
 always @(*)
-    case( control[27:24] )    //            IPHF_AHB__ABL_CI
+    case( control[27:24] )    //             IPHF_AHB_____________ABL_CI
         4'b0100:                ab_op = { 7'b0110_100, abl_sel, 3'b01_1 };  // AB + 1    
         4'b0001:                ab_op = { 7'b1110_000, abl_sel, 3'b10_0 };  // {00, DB+REG}    
         4'b0000:                ab_op = { 7'b0000_110, abl_sel, 3'b00_0 };  // PC         

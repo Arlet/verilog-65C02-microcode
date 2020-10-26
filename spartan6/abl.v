@@ -11,7 +11,7 @@ module abl(
     output CO,              // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
-    input [3:0] op,         // operation
+    input [4:0] op,         // operation
     input ld_ahl,           // indicates whether AHL should be loaded
     input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
@@ -42,15 +42,15 @@ always @(posedge clk)
  *
  * There are a total of 6 useful combinations. 
  *
- * operation  | op[3:2] | op[1:0] | application
- * ===========|=========|=========|==================================
- * PCL + 00   |   00    |   00    | PC restore
- * REG + 00   |   01    |   01    | stack access or vector pull 
- * ABL + DB   |   10    |   10    | take branch 
- * ABL + 00   |   10    |   01    | stay at current or move to next
- * REG + DB   |   01    |   10    | zeropage + index
- * REG + AHL  |   01    |   11    | abs + index
- * ================================================================
+ * operation  | op[1:0] | application
+ * ===========|=========|================================
+ * PCL + 00   |   00    | PC restore
+ * REG + 00   |   01    | stack access or vector pull 
+ * ABL + DB   |   10    | take branch 
+ * ABL + 00   |   01    | stay at current or move to next
+ * REG + DB   |   10    | zeropage + index
+ * REG + AHL  |   11    | abs + index
+ * ======================================================
  * 
  */
 reg [7:0] base;
@@ -60,11 +60,15 @@ reg [7:0] base;
  */ 
 
 always @(*)
-    case( op[3:2] )
-        2'b00: base = PCL;
-        2'b01: base = REG;
-        2'b10: base = ABL;
-        2'b11: base = 8'hxx;
+    case( op[4:2] )
+        3'b000: base = PCL;
+        3'b001: base = REG;
+        3'b010: base = ABL;
+        3'b011: base = REG;
+        3'b100: base = ABL;
+        3'b101: base = REG;
+        3'b110: base = ABL;
+        3'b111: base = REG;
     endcase
 
 /*   

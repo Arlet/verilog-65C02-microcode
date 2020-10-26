@@ -50,7 +50,7 @@ module ctl(
     input I,
     input D,
     output B,
-    output reg [11:0] ab_op );
+    output reg [12:0] ab_op );
 
 wire [2:0] adder;
 wire [1:0] shift;
@@ -148,31 +148,33 @@ assign B = control[8];
  * of the conditional branches, and the branch direction (DB[7])
  */
 
+wire [2:0] abl_sel = control[26:24];
+
 always @(*)
-    case( control[27:24] )    //            IPHF_AHB_ABL_CI
-        4'b0000:                ab_op = 12'b0110_100_1001_1;     // AB + 1    
-        4'b0001:                ab_op = 12'b1110_000_0110_0;     // {00, DB+REG}    
-        4'b0010:                ab_op = 12'b0000_110_0000_0;     // PC         
-        4'b0011:                ab_op = 12'b1110_111_0111_0;     // {DB, AHL+REG}, store PC
-        4'b0100:                ab_op = 12'b0100_010_0101_0;     // {01, SP}     
-        4'b0101:                ab_op = 12'b0010_100_1001_0;     // AB + 0        
-        4'b0110:                ab_op = 12'b0010_111_0111_0;     // {DB, AHL+REG}, keep PC
-        4'b0111:                ab_op = 12'b0110_010_0101_1;     // {01, SP+1}
-        4'b1000: if( cond )                                      // branch if true 
-                    if( DB[7] ) ab_op = 12'b0110_101_1010_1;     // {AB-1, AB} + DB + 1
-                    else        ab_op = 12'b0110_100_1010_1;     // {AB+0, AB} + DB + 1
-                 else           ab_op = 12'b0110_100_1001_1;     // AB + 1    
-        4'b1001: if( !cond )                                     // branch if false
-                    if( DB[7] ) ab_op = 12'b0110_101_1010_1;     // {AB-1, AB} + DB + 1
-                    else        ab_op = 12'b0110_100_1010_1;     // {AB+0, AB} + DB + 1
-                 else           ab_op = 12'b0110_100_1001_1;     // AB + 1    
-        4'b1010:                ab_op = 12'b0000_010_0101_0;     // {01, SP}, keep PC
-        4'b1011:                ab_op = 12'b1110_010_0101_0;     // {01, SP}, store PC+1
-        4'b1100:                ab_op = 12'b0001_000_0101_0;     // {FF, REG}
-        4'b1101: if( DB[7] )    ab_op = 12'b0110_101_1010_1;     // {AB-1, AB} + DB + 1
-                 else           ab_op = 12'b0110_100_1010_1;     // {AB+0, AB} + DB + 1
-        4'b1110:                ab_op = 12'b0010_100_1001_1;     // AB+1, keep PC
-        default:                ab_op = 12'bxxxx_xxx_xxxx_x;
+    case( control[27:24] )    //             IPHF_AHB_____________ABL_CI
+        4'b0100:                ab_op = { 7'b0110_100, abl_sel, 3'b01_1 };  // AB + 1    
+        4'b0001:                ab_op = { 7'b1110_000, abl_sel, 3'b10_0 };  // {00, DB+REG}    
+        4'b0000:                ab_op = { 7'b0000_110, abl_sel, 3'b00_0 };  // PC         
+        4'b0101:                ab_op = { 7'b1110_111, abl_sel, 3'b11_0 };  // {DB, AHL+REG}, store PC
+        4'b1001:                ab_op = { 7'b0100_010, abl_sel, 3'b01_0 };  // {01, SP}     
+        4'b1100:                ab_op = { 7'b0010_100, abl_sel, 3'b01_0 };  // AB + 0        
+        4'b1101:                ab_op = { 7'b0010_111, abl_sel, 3'b11_0 };  // {DB, AHL+REG}, keep PC
+        4'b0011:                ab_op = { 7'b0110_010, abl_sel, 3'b01_1 };  // {01, SP+1}
+        4'b0010: if( cond )                                                 // branch if true 
+                    if( DB[7] ) ab_op = { 7'b0110_101, abl_sel, 3'b10_1 };  // {AB-1, AB} + DB + 1
+                    else        ab_op = { 7'b0110_100, abl_sel, 3'b10_1 };  // {AB+0, AB} + DB + 1
+                 else           ab_op = { 7'b0110_100, abl_sel, 3'b01_1 };  // AB + 1    
+        4'b0110: if( !cond )                                                // branch if false
+                    if( DB[7] ) ab_op = { 7'b0110_101, abl_sel, 3'b10_1 };  // {AB-1, AB} + DB + 1
+                    else        ab_op = { 7'b0110_100, abl_sel, 3'b10_1 };  // {AB+0, AB} + DB + 1
+                 else           ab_op = { 7'b0110_100, abl_sel, 3'b01_1 };  // AB + 1    
+        4'b0111:                ab_op = { 7'b0000_010, abl_sel, 3'b01_0 };  // {01, SP}, keep PC
+        4'b1011:                ab_op = { 7'b1110_010, abl_sel, 3'b01_0 };  // {01, SP}, store PC+1
+        4'b1111:                ab_op = { 7'b0001_000, abl_sel, 3'b01_0 };  // {FF, REG}
+        4'b1010: if( DB[7] )    ab_op = { 7'b0110_101, abl_sel, 3'b10_1 };  // {AB-1, AB} + DB + 1
+                 else           ab_op = { 7'b0110_100, abl_sel, 3'b10_1 };  // {AB+0, AB} + DB + 1
+        4'b1110:                ab_op = { 7'b0010_100, abl_sel, 3'b01_1 };  // AB+1, keep PC
+        default:                ab_op = { 7'bxxxx_xxx, abl_sel, 3'bxx_x };  
     endcase
 
 endmodule
