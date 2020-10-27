@@ -8,6 +8,7 @@
 module abl( 
     input clk,
     input CI,               // carry input
+    input cond,             // condition code input
     output reg CO,          // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
@@ -55,38 +56,42 @@ always @(posedge clk)
  */
 reg [7:0] base;
 
+/* 
+ * the branch signal indicates whether branch should be
+ * taken. The 'cond' input only checks for flags that are
+ * set. That condition is inverted by op[4] so we can check
+ * for flags that are cleared instead.
+ */
+wire branch = cond ^ op[4];
+
 /*   
  * First stage. Select base register.
  */ 
-
 always @(*)
-    case( op[4:2] )
-        3'b000: base = PCL;
-        3'b001: base = REG;
-        3'b010: base = ABL;
-        3'b011: base = REG;
-        3'b100: base = ABL;
-        3'b101: base = REG;
-        3'b110: base = ABL;
-        3'b111: base = REG;
+    case( op[3:2] )
+        2'b00: base = 8'h00;
+        2'b01: base = DB;
+        2'b10: base = AHL;
+        2'b11: base = branch ? DB : 8'h00;
     endcase
 
 /*   
- * Second stage. Add offset.
+ * Second stage. Add offset, or replace
+ * by REG.
  *
  *  op  | function
  * =====|========= 
- * --00 | base + 00  + CI
- * --01 | base + 00  + CI
- * --10 | base + DB  + CI
- * --11 | base + AHL + CI
+ * --00 |   REG + CI
+ * --01 | + REG + CI
+ * --10 | + PCL + CI
+ * --11 | + ABL + CI
  */
 always @(*)
     case( op[1:0] )
-        2'b00: {CO, ADL} = base  + 8'h00 + CI;
-        2'b01: {CO, ADL} = base  + 8'h00 + CI;
-        2'b10: {CO, ADL} = base  + DB    + CI;
-        2'b11: {CO, ADL} = base  + AHL   + CI;
+        2'b00: {CO, ADL} =        REG + CI;
+        2'b01: {CO, ADL} = base + REG + CI;
+        2'b10: {CO, ADL} = base + PCL + CI;
+        2'b11: {CO, ADL} = base + ABL + CI;
     endcase
 
 always @(posedge clk)

@@ -103,6 +103,7 @@ abl abl(
     .clk(clk),
     .CI(abl_ci),
     .CO(abl_co),
+    .cond(cond),
     .op(abl_op),
     .ld_ahl(ld_ahl),
     .ld_pc(ld_pc),
