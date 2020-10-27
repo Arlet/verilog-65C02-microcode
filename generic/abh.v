@@ -15,7 +15,6 @@ module abh(
 );
 
 reg [7:0] ABH;
-reg [7:0] ADH;
 reg [7:0] ADH0;             // assume CI = 0
 reg [7:0] ADH1;             // assume CI = 1
 
