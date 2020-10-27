@@ -56,23 +56,19 @@ always @(posedge clk)
  */
 reg [7:0] base;
 
-/* 
- * the branch signal indicates whether branch should be
- * taken. The 'cond' input only checks for flags that are
- * set. That condition is inverted by op[4] so we can check
- * for flags that are cleared instead.
- */
-wire branch = cond ^ op[4];
-
 /*   
  * First stage. Select base register.
  */ 
 always @(*)
-    case( op[3:2] )
-        2'b00: base = 8'h00;
-        2'b01: base = DB;
-        2'b10: base = AHL;
-        2'b11: base = branch ? DB : 8'h00;
+    casez( {cond, op[4:2]} )
+        4'b?00?: base = 8'h00;
+        4'b?010: base = PCL;
+        4'b?011: base = AHL;
+        4'b?10?: base = DB;
+        4'b0110: base = 8'h00;
+        4'b0111: base = DB;
+        4'b1110: base = DB;
+        4'b1111: base = 8'h00;
     endcase
 
 /*   
@@ -90,7 +86,7 @@ always @(*)
     case( op[1:0] )
         2'b00: {CO, ADL} =        REG + CI;
         2'b01: {CO, ADL} = base + REG + CI;
-        2'b10: {CO, ADL} = base + PCL + CI;
+        2'b10: {CO, ADL} = base +       CI;
         2'b11: {CO, ADL} = base + ABL + CI;
     endcase
 
