@@ -117,9 +117,8 @@ assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
  */
 
 always @(*)
-    case( op[4:3] )
-        2'b00: {CO, OUT} = adder;
-        2'b01: {CO, OUT} = { 1'b0, M };
+    casez( op[4:3] )
+        2'b0?: {CO, OUT} = adder;
         2'b10: {CO, OUT} = { adder[7:0], SI };
         2'b11: {OUT, CO} = { SI, adder[7:0] };
     endcase
