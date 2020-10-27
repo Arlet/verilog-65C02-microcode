@@ -11,7 +11,7 @@ module abh(
     input ld_pc,            // load PC 
     input inc_pc,           // increment PC
     output [7:0] PCH,       // Program Counter high
-    output reg [7:0] ADH    // unregistered version of ABH
+    output [7:0] ADH        // unregistered version of ABH
 );
 
 wire [7:0] ABH;
@@ -33,7 +33,7 @@ add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add0(
     .I0(ABH),
     .I1(DB),
     .I2(PCH),
-    .op({1'b1,op[1:0]}),
+    .op(op[1:0]),
     .CI(0),
     .O(ADD0) );
 
@@ -41,17 +41,39 @@ add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add1(
     .I0(ABH),
     .I1(DB),
     .I2(PCH),
-    .op({1'b1,op[1:0]}),
+    .op(op[1:0]),
     .CI(1),
     .O(ADD1) );
 
-always @(*)
+/* bit 0 is different */
+LUT5 #(.INIT(32'hffe4ff00)) abh_mux0( 
+    .O(ADH[0]), 
+    .I0(CI), 
+    .I1(ADD0[0]), 
+    .I2(ADD1[0]), 
+    .I3(op[2]), 
+    .I4(op[3]) );
+
+/* other bits are all the same */
+genvar i;
+generate for (i = 1; i < 8; i = i + 1 )
+LUT5 #(.INIT(32'hffe40000)) abh_mux1( 
+    .O(ADH[i]), 
+    .I0(CI), 
+    .I1(ADD0[i]), 
+    .I2(ADD1[i]), 
+    .I3(op[2]), 
+    .I4(op[3]) );
+endgenerate
+
+    /*
     case( op[3:2] )
         2'b00:      ADH = 8'h00;
         2'b01:      ADH = 8'h01;
         2'b10:      ADH = CI ? ADD1 : ADD0; 
         2'b11:      ADH = 8'hff;
     endcase
+*/
 
 /* 
  * ABH register
@@ -76,7 +98,7 @@ add8_3 #(.INIT(64'haaaaaaaa00000000)) pch_inc(
     .I0(ABH),
     .I1(0),
     .I2(0),
-    .op(3'b100),
+    .op(2'b00),
     .O(PCH1) );
 
 /* 

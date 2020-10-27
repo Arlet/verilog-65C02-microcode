@@ -121,7 +121,7 @@ add8_3 #(.INIT(64'h66aa5af08800a000)) abl_add(
     .I0(base),
     .I1(ABL),
     .I2(REG),
-    .op({1'b1,op[1:0]}),
+    .op(op[1:0]),
     .O(ADL) );
 
 /* 
@@ -151,7 +151,7 @@ add8_3 #(.INIT(64'haaaaaaaa00000000)) pcl_inc(
     .I0(ABL),
     .I1(0),
     .I2(0),
-    .op(3'b100),
+    .op(2'b00),
     .O(PCL1) );
 
 /* 

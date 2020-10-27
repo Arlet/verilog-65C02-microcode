@@ -3,7 +3,7 @@ module add8_3(
     input [7:0] I0,
     input [7:0] I1,
     input [7:0] I2,
-    input [2:0] op,
+    input [1:0] op,
     output [7:0] O,
     output CO 
     );
@@ -26,7 +26,7 @@ LUT6_2 #(.INIT(INIT)) add(
     .I2(I2[i]),
     .I3(op[0]),
     .I4(op[1]),
-    .I5(op[2]) );
+    .I5(1) );
 end
 endgenerate
 
