@@ -11,7 +11,7 @@ module abh(
     input ld_pc,            // load PC 
     input inc_pc,           // increment PC
     output [7:0] PCH,       // Program Counter high
-    output [7:0] ADH        // unregistered version of ABH
+    output reg [7:0] ADH    // unregistered version of ABH
 );
 
 wire [7:0] ABH;
