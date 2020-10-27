@@ -8,6 +8,7 @@
 module abl( 
     input clk,
     input CI,               // carry input
+    input cond,             // condition code input
     output CO,              // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
@@ -22,6 +23,8 @@ module abl(
 );
 
 wire [7:0] ABL;
+wire [7:0] base0;
+wire [7:0] base1;
 wire [7:0] base;
 
 /*
@@ -60,32 +63,45 @@ reg8 ahl(
  */
 
 /*   
- * First stage. Select base register. We use this
- * particular 3 bit encoding to match with the raw
- * output from the microcode ROM.
+ * First stage. Select base value. 
  *
- *  op   | base
- * ======|====
- * 000-- | PCL
- * 001-- | REG
- * 010-- | ABL
- * 011-- | REG
- * 100-- | ABL
- * 101-- | REG
- * 110-- | ABL
- * 111-- | REG
+ *  op[3:2] | base
+ * =========|====
+ *   00     | 00
+ *   01     | DB
+ *   10     | AHL
+ *   11     | DB/00 
  */ 
 
 genvar i;
 generate for (i = 0; i < 8; i = i + 1 )
-LUT6 #(.INIT(64'hccf0ccf0ccf0ccaa)) adl_base_mux(
-    .O(base[i]), 
-    .I0(PCL[i]), 
-    .I1(REG[i]), 
-    .I2(ABL[i]), 
+LUT6 #(.INIT(64'haa00aaaaccf00000)) adl_base0_mux(
+    .O(base0[i]), 
+    .I0(DB[i]), 
+    .I1(AHL[i]), 
+    .I2(PCL[i]), 
     .I3(op[2]), 
     .I4(op[3]), 
     .I5(op[4]) );
+endgenerate
+
+generate for (i = 0; i < 8; i = i + 1 )
+LUT6 #(.INIT(64'h00aaaaaaccf00000)) adl_base1_mux(
+    .O(base1[i]), 
+    .I0(DB[i]), 
+    .I1(AHL[i]), 
+    .I2(PCL[i]), 
+    .I3(op[2]), 
+    .I4(op[3]), 
+    .I5(op[4]) );
+endgenerate
+
+generate for (i = 0; i < 8; i = i + 1 )
+MUXF7 adl_base_mux (
+    .O(base[i]),
+    .I0(base0[i]),
+    .I1(base1[i]),
+    .S(cond) );
 endgenerate
 
 /*   
@@ -99,12 +115,12 @@ endgenerate
  * --11 | base + AHL + CI
  */
 
-add8_3 #(.INIT(64'h3c5af0f0c0a00000)) abl_add( 
+add8_3 #(.INIT(64'h66aa5af08800a000)) abl_add( 
     .CI(CI),
     .CO(CO),
-    .I0(DB),
-    .I1(AHL),
-    .I2(base),
+    .I0(base),
+    .I1(ABL),
+    .I2(REG),
     .op({1'b1,op[1:0]}),
     .O(ADL) );
 
