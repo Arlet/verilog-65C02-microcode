@@ -118,9 +118,8 @@ assign adjh = BC8 | DC;
  */
 
 always @(*)
-    case( op[4:3] )
-        2'b00: {CO, OUT} = { carry[7], add };
-        2'b01: {CO, OUT} = { 1'b0, M };
+    casez( op[4:3] )
+        2'b0?: {CO, OUT} = { carry[7], add };
         2'b10: {CO, OUT} = { add, SI };
         2'b11: {OUT, CO} = { SI, add };
     endcase
