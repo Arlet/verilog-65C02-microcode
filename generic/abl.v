@@ -43,15 +43,15 @@ always @(posedge clk)
  *
  * There are a total of 6 useful combinations. 
  *
- * operation  | op[1:0] | application
- * ===========|=========|================================
- * PCL + 00   |   00    | PC restore
- * REG + 00   |   01    | stack access or vector pull 
- * ABL + DB   |   10    | take branch 
- * ABL + 00   |   01    | stay at current or move to next
- * REG + DB   |   10    | zeropage + index
- * REG + AHL  |   11    | abs + index
- * ======================================================
+ * operation  |  application
+ * ===========|=================================
+ * PCL + 00   |  PC restore
+ * REG + 00   |  stack access or vector pull 
+ * ABL + DB   |  take branch 
+ * ABL + 00   |  stay at current or move to next
+ * REG + DB   |  zeropage + index
+ * REG + AHL  |  abs + index
+ * =============================================
  * 
  */
 reg [7:0] base;
@@ -79,14 +79,14 @@ always @(*)
  * =====|========= 
  * --00 |   REG + CI
  * --01 | + REG + CI
- * --10 | + PCL + CI
+ * --10 | + 00  + CI
  * --11 | + ABL + CI
  */
 always @(*)
     case( op[1:0] )
-        2'b00: {CO, ADL} =        REG + CI;
+        2'b00: {CO, ADL} = REG + CI;
         2'b01: {CO, ADL} = base + REG + CI;
-        2'b10: {CO, ADL} = base +       CI;
+        2'b10: {CO, ADL} = base + CI;
         2'b11: {CO, ADL} = base + ABL + CI;
     endcase
 
