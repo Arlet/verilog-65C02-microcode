@@ -76,6 +76,7 @@ wire SBC = op[2];
  */
 wire BC4 = SBC ^ carry[3];
 wire BC8 = SBC ^ carry[7];
+wire C8 = carry[7];
 
 /*
  * overflow
@@ -111,17 +112,28 @@ assign adjh = BC8 | DC;
  * 
  * op       function
  * ===============================
- * 00---  | unmodified adder result
- * 01---  | bypassed M input
+ * 0?---  | unmodified adder result
  * 10---  | adder shift left
  * 11---  | adder shift right
  */
 
+LUT5 #(.INIT(32'hf0ccaaaa)) out0(.O(OUT[0]), .I0(add[0]), .I1(SI),     .I2(add[1]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out1(.O(OUT[1]), .I0(add[1]), .I1(add[0]), .I2(add[2]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out2(.O(OUT[2]), .I0(add[2]), .I1(add[1]), .I2(add[3]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out3(.O(OUT[3]), .I0(add[3]), .I1(add[2]), .I2(add[4]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out4(.O(OUT[4]), .I0(add[4]), .I1(add[3]), .I2(add[5]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out5(.O(OUT[5]), .I0(add[5]), .I1(add[4]), .I2(add[6]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out6(.O(OUT[6]), .I0(add[6]), .I1(add[5]), .I2(add[7]), .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out7(.O(OUT[7]), .I0(add[7]), .I1(add[6]), .I2(SI),     .I3(op[3]), .I4(op[4]));
+LUT5 #(.INIT(32'hf0ccaaaa)) out8(.O(CO),     .I0(C8),     .I1(add[7]), .I2(add[0]), .I3(op[3]), .I4(op[4]));
+
+/*
 always @(*)
     casez( op[4:3] )
         2'b0?: {CO, OUT} = { carry[7], add };
         2'b10: {CO, OUT} = { add, SI };
         2'b11: {OUT, CO} = { SI, add };
     endcase
+*/
 
 endmodule

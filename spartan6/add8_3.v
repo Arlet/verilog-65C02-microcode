@@ -26,7 +26,7 @@ LUT6_2 #(.INIT(INIT)) add(
     .I2(I2[i]),
     .I3(op[0]),
     .I4(op[1]),
-    .I5(1) );
+    .I5(1'b1));
 end
 endgenerate
 

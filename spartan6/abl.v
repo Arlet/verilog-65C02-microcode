@@ -18,10 +18,10 @@ module abl(
     input inc_pc,           // indicates whether PCL should be incremented
     output pcl_co,          // Carry out from PCL
     output [7:0] PCL,       // Program Counter low
-    output [7:0] AHL,       // Address Hold low
     output [7:0] ADL        // unregistered version of output
 );
 
+wire [7:0] AHL;
 wire [7:0] ABL;
 wire [7:0] base0;
 wire [7:0] base1;
@@ -40,7 +40,7 @@ wire [7:0] base;
 reg8 ahl( 
     .clk(clk),
     .EN(ld_ahl),
-    .RST(0),
+    .RST(1'b0),
     .D(DB),
     .Q(AHL) );
 
@@ -75,6 +75,7 @@ reg8 ahl(
 
 genvar i;
 generate for (i = 0; i < 8; i = i + 1 )
+begin: adl_base0_mux
 LUT6 #(.INIT(64'haa00aaaaccf00000)) adl_base0_mux(
     .O(base0[i]), 
     .I0(DB[i]), 
@@ -83,9 +84,11 @@ LUT6 #(.INIT(64'haa00aaaaccf00000)) adl_base0_mux(
     .I3(op[2]), 
     .I4(op[3]), 
     .I5(op[4]) );
+end
 endgenerate
 
 generate for (i = 0; i < 8; i = i + 1 )
+begin: adl_base1_mux
 LUT6 #(.INIT(64'h00aaaaaaccf00000)) adl_base1_mux(
     .O(base1[i]), 
     .I0(DB[i]), 
@@ -94,14 +97,17 @@ LUT6 #(.INIT(64'h00aaaaaaccf00000)) adl_base1_mux(
     .I3(op[2]), 
     .I4(op[3]), 
     .I5(op[4]) );
+end
 endgenerate
 
 generate for (i = 0; i < 8; i = i + 1 )
+begin: adl_base_mux
 MUXF7 adl_base_mux (
     .O(base[i]),
     .I0(base0[i]),
     .I1(base1[i]),
     .S(cond) );
+end
 endgenerate
 
 /*   
@@ -131,8 +137,8 @@ add8_3 #(.INIT(64'h66aa5af08800a000)) abl_add(
  */ 
 reg8 abl( 
     .clk(clk),
-    .EN(1),
-    .RST(0),
+    .EN(1'b1),
+    .RST(1'b0),
     .D(ADL),
     .Q(ABL) );
 
@@ -160,7 +166,7 @@ add8_3 #(.INIT(64'haaaaaaaa00000000)) pcl_inc(
 reg8 pcl( 
     .clk(clk),
     .EN(ld_pc),
-    .RST(0),
+    .RST(1'b0),
     .D(PCL1),
     .Q(PCL) );
 

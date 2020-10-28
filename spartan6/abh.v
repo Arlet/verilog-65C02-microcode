@@ -34,7 +34,7 @@ add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add0(
     .I1(DB),
     .I2(PCH),
     .op(op[1:0]),
-    .CI(0),
+    .CI(1'b0),
     .O(ADD0) );
 
 add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add1(
@@ -42,7 +42,7 @@ add8_3 #(.INIT(64'hccf055aa0000aa00)) adh_add1(
     .I1(DB),
     .I2(PCH),
     .op(op[1:0]),
-    .CI(1),
+    .CI(1'b1),
     .O(ADD1) );
 
 /* bit 0 is different */
@@ -57,6 +57,7 @@ LUT5 #(.INIT(32'hffe4ff00)) abh_mux0(
 /* other bits are all the same */
 genvar i;
 generate for (i = 1; i < 8; i = i + 1 )
+begin: abh_mux1
 LUT5 #(.INIT(32'hffe40000)) abh_mux1( 
     .O(ADH[i]), 
     .I0(CI), 
@@ -64,6 +65,7 @@ LUT5 #(.INIT(32'hffe40000)) abh_mux1(
     .I2(ADD1[i]), 
     .I3(op[2]), 
     .I4(op[3]) );
+end
 endgenerate
 
     /*
@@ -82,8 +84,8 @@ endgenerate
  */ 
 reg8 abh( 
     .clk(clk),
-    .EN(1),
-    .RST(0),
+    .EN(1'b1),
+    .RST(1'b0),
     .D(ADH),
     .Q(ABH) );
 
@@ -96,8 +98,8 @@ reg8 abh(
 add8_3 #(.INIT(64'haaaaaaaa00000000)) pch_inc(
     .CI(inc_pc),
     .I0(ABH),
-    .I1(0),
-    .I2(0),
+    .I1(8'b0),
+    .I2(8'b0),
     .op(2'b00),
     .O(PCH1) );
 
@@ -107,7 +109,7 @@ add8_3 #(.INIT(64'haaaaaaaa00000000)) pch_inc(
 reg8 pch( 
     .clk(clk),
     .EN(ld_pc),
-    .RST(0),
+    .RST(1'b0),
     .D(PCH1),
     .Q(PCH) );
 
