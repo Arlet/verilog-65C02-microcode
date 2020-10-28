@@ -62,8 +62,14 @@ assign flags = {control[30:29], control[7:0]};
 assign alu_op = { ci, shift, adder };
 assign reg_op = control[21:15];
 
-reg [30:0] microcode[511:0];
-reg [30:0] control;
+reg [8:0] pc;
+wire [30:0] control;
+reg [4:0] finish;   // finishing code
+
+microcode rom(
+    .clk(clk),
+    .addr(pc),
+    .data(control) );
 
 /* 
  * operation for DO (data out)
@@ -74,12 +80,6 @@ assign do_op = control[30:29];
  * sync indicates when new instruction is decoded
  */
 assign sync = (control[23:22] == 2'b00);
-
-initial 
-    $readmemb( "microcode.hex", microcode, 0 );
-
-reg [8:0] pc;
-reg [4:0] finish;   // finishing code
 
 /*
  * The microcontrol 'program counter'.
@@ -110,12 +110,6 @@ always @(*)
  */
 always @(posedge clk)
     WE <= control[28];
-
-/*
- * load next control word from ROM
- */
-always @(posedge clk)
-    control <= microcode[pc];
 
 /*
  * if bit 23 is set, the ALU is not needed in this cycle
