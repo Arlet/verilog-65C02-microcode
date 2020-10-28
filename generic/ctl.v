@@ -45,7 +45,7 @@ module ctl(
     output reg WE,
     output [9:0] flags,
     output [6:0] alu_op,
-    output [6:0] dp_op,
+    output [6:0] reg_op,
     output [1:0] do_op,
     input I,
     input D,
@@ -60,7 +60,7 @@ wire [2:0] dst;
 
 assign flags = {control[30:29], control[7:0]};
 assign alu_op = { ci, shift, adder };
-assign dp_op  = control[21:15];
+assign reg_op = control[21:15];
 
 reg [30:0] microcode[511:0];
 reg [30:0] control;

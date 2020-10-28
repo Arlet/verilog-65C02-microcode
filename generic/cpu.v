@@ -78,7 +78,7 @@ wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
  * Register file signals
  */
 
-wire [6:0] dp_op;
+wire [6:0] reg_op;
 wire [7:0] R;
 
 /*
@@ -86,7 +86,7 @@ wire [7:0] R;
  */
 regfile regfile(
     .clk(clk),
-    .op(dp_op),
+    .op(reg_op),
     .DI(alu_out),
     .DO(R) );
 
@@ -188,7 +188,7 @@ ctl ctl(
     .sync(sync),
     .flags(flags),
     .alu_op(alu_op),
-    .dp_op(dp_op),
+    .reg_op(reg_op),
     .ab_op(ab_op),
     .do_op(do_op),
     .I(I),
