@@ -60,15 +60,12 @@ reg [7:0] base;
  * First stage. Select base register.
  */ 
 always @(*)
-    casez( {cond, op[4:2]} )
-        4'b?00?: base = 8'h00;
-        4'b?010: base = PCL;
-        4'b?011: base = AHL;
-        4'b?10?: base = DB;
-        4'b0110: base = 8'h00;
-        4'b0111: base = DB;
-        4'b1110: base = DB;
-        4'b1111: base = 8'h00;
+    casez( {cond, op[3:2]} )
+        3'b?00: base = 8'h00;
+        3'b?01: base = PCL;
+        3'b?10: base = AHL;
+        3'b011: base = 8'h00; 
+        3'b111: base = DB;
     endcase
 
 /*   

@@ -305,15 +305,20 @@ always @(posedge clk)
         endcase
 
 /*
- * branch condition. Only consider the case for set flags.
- * Inversion is done in the microcode sequencer.
+ * branch condition. 
  */
 always @(*)
-    casez( M[7:6] )
-        2'b00:          cond = N;      // BMI
-        2'b01:          cond = V;      // BVS
-        2'b10:          cond = C;      // BCS
-        2'b11:          cond = Z;      // BEQ
+    if( M[0] | M[1] | M[2] )  cond = 1;      // non-conditional instructions
+    else casez( M[7:4] )
+        4'b000?:        cond = ~N;     // BPL
+        4'b001?:        cond = N;      // BMI
+        4'b010?:        cond = ~V;     // BVC
+        4'b011?:        cond = V;      // BVS
+        4'b1000:        cond = 1;      // BRA
+        4'b100?:        cond = ~C;     // BCC
+        4'b101?:        cond = C;      // BCS
+        4'b110?:        cond = ~Z;     // BNE
+        4'b111?:        cond = Z;      // BEQ
     endcase
 
 /*
