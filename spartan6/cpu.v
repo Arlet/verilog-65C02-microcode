@@ -29,29 +29,8 @@ assign AD = {ADH, ADL};
  * databus
  */
 wire [7:0] DB = DI;                     // data bus low (alias for DB)
+
 reg [7:0] M;                            // registered value of DB
-
-reg [7:0] regs[15:0];                   // register file
-
-
-initial begin
-    regs[0]  = 2;                       // X register 
-    regs[1]  = 3;                       // Y register 
-    regs[2]  = 8'h41;                   // A register
-    regs[3]  = 8'hff;                   // S register
-    regs[4]  = 8'hfe;                   // IRQ/BRK vector
-    regs[5]  = 8'h01;                   // for INC
-    regs[6]  = 8'hff;                   // for DEC
-    regs[7]  = 8'h00;                   // Z register, always zero
-    regs[8]  = 8'hfa;                   // NMI
-    regs[9]  = 8'hfc;                   // RST
-    regs[10] = 8'hfe;                   // BRK
-end
-
-wire [6:0] dp_op;                       //
-wire [2:0] reg_wr = dp_op[6:4];         // register file select
-wire [3:0] reg_rd = dp_op[3:0];         // register file select
-wire [7:0] R = regs[reg_rd];            // read register
 
 /*
  * Address Bus signals 
@@ -95,6 +74,21 @@ wire B;
 
 wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
 
+/*
+ * Register file signals
+ */
+
+wire [6:0] reg_op;
+wire [7:0] R;
+
+/*
+ * Register file 
+ */
+regfile regfile(
+    .clk(clk),
+    .op(reg_op),
+    .DI(alu_out),
+    .DO(R) );
 
 /*
  * ABL (Address Bus Low) logic
@@ -129,15 +123,6 @@ abh abh(
     .DB(DB)
 );
 
-/*
- * write register file. New data for any of the 
- * registers always comes from the ALU output.
- *
- * Registers 4 and up are read-only.
- */
-always @(posedge clk)
-    if( reg_wr < 4 )
-        regs[reg_wr] <= alu_out;
 
 /*
  * M register update. The M register holds the most
@@ -203,7 +188,7 @@ ctl ctl(
     .sync(sync),
     .flags(flags),
     .alu_op(alu_op),
-    .dp_op(dp_op),
+    .reg_op(reg_op),
     .ab_op(ab_op),
     .do_op(do_op),
     .I(I),
@@ -429,10 +414,10 @@ integer cycle;
 always @( posedge clk )
     cycle <= cycle + 1;
 
-wire [7:0] X = regs[0];                 // for simulator viewing
-wire [7:0] Y = regs[1];                 // for simulator viewing
-wire [7:0] A = regs[2];                 // for simulator viewing
-wire [7:0] S = regs[3];                 // for simulator viewing
+wire [7:0] X = regfile.regs[0];
+wire [7:0] Y = regfile.regs[1];
+wire [7:0] A = regfile.regs[2];
+wire [7:0] S = regfile.regs[3];
 
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
