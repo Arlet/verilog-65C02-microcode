@@ -23,8 +23,6 @@ module abl(
 
 wire [7:0] AHL;
 wire [7:0] ABL;
-wire [7:0] base0;
-wire [7:0] base1;
 wire [7:0] base;
 
 /*
@@ -65,68 +63,45 @@ reg8 ahl(
 /*   
  * First stage. Select base value. 
  *
- *  op[3:2] | base
- * =========|====
- *   00     | 00
- *   01     | DB
- *   10     | AHL
- *   11     | DB/00 
+ *  casez( {cond, op[3:2]} )
+ *      3'b?00: base = 8'h00;
+ *      3'b?01: base = PCL;
+ *      3'b?10: base = AHL;
+ *      3'b011: base = 8'h00; 
+ *      3'b111: base = DB;
+ *  endcase
  */ 
 
 genvar i;
 generate for (i = 0; i < 8; i = i + 1 )
-begin: adl_base0_mux
-LUT6 #(.INIT(64'haa00aaaaccf00000)) adl_base0_mux(
-    .O(base0[i]), 
-    .I0(DB[i]), 
-    .I1(AHL[i]), 
-    .I2(PCL[i]), 
-    .I3(op[2]), 
-    .I4(op[3]), 
-    .I5(op[4]) );
-end
-endgenerate
-
-generate for (i = 0; i < 8; i = i + 1 )
-begin: adl_base1_mux
-LUT6 #(.INIT(64'h00aaaaaaccf00000)) adl_base1_mux(
-    .O(base1[i]), 
-    .I0(DB[i]), 
-    .I1(AHL[i]), 
-    .I2(PCL[i]), 
-    .I3(op[2]), 
-    .I4(op[3]), 
-    .I5(op[4]) );
-end
-endgenerate
-
-generate for (i = 0; i < 8; i = i + 1 )
 begin: adl_base_mux
-MUXF7 adl_base_mux (
-    .O(base[i]),
-    .I0(base0[i]),
-    .I1(base1[i]),
-    .S(cond) );
+LUT6 #(.INIT(64'haaccf000_00ccf000)) adl_base_mux(
+    .O(base[i]), 
+    .I0(DB[i]), 
+    .I1(AHL[i]), 
+    .I2(PCL[i]), 
+    .I3(op[2]), 
+    .I4(op[3]), 
+    .I5(cond) );
 end
 endgenerate
 
 /*   
  * Second stage. Add offset.
  *
- *  op  | function
- * =====|========= 
- * --00 | base + 00  + CI
- * --01 | base + 00  + CI
- * --10 | base + DB  + CI
- * --11 | base + AHL + CI
+ *  case( op[1:0] )
+ *      2'b00: {CO, ADL} = REG + CI;
+ *      2'b01: {CO, ADL} = base + REG + CI;
+ *      2'b10: {CO, ADL} = base + CI;
+ *      2'b11: {CO, ADL} = base + ABL + CI;
+ *  endcase
  */
-
-add8_3 #(.INIT(64'h66aa5af08800a000)) abl_add( 
+add8_3 #(.INIT(64'h5aaa66cc_a0008800)) abl_add( 
     .CI(CI),
     .CO(CO),
     .I0(base),
-    .I1(ABL),
-    .I2(REG),
+    .I1(REG),
+    .I2(ABL),
     .op(op[1:0]),
     .O(ADL) );
 
@@ -145,20 +120,10 @@ reg8 abl(
 /*
  * update PCL (program counter low)
  * 
- * if( ld_pc )
- *     PCL <= ABL + inc_pc
  */
+wire [8:0] PCL1 = ABL + inc_pc;
 
-wire [7:0] PCL1;
-
-add8_3 #(.INIT(64'haaaaaaaa00000000)) pcl_inc(
-    .CI(inc_pc),
-    .CO(pcl_co),
-    .I0(ABL),
-    .I1(0),
-    .I2(0),
-    .op(2'b00),
-    .O(PCL1) );
+assign pcl_co = PCL1[8];
 
 /* 
  * PCL register

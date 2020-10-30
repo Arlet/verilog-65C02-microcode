@@ -35,7 +35,7 @@ reg [7:0] regs[15:0];                   // register file
  * addr:  A9876543210
  * ---------------------
  * 1:0    20203123132   10_0010_0011_0110_1101_1110 
- * 3:2    33203033100   11_1110_0011_0011_1101_0000 
+ * 3:2    33203033000   11_1110_0011_0011_1100_0000 
  * 5:4    33303033000   11_1111_0011_0011_1100_0000
  * 7:6    33303033100   11_1111_0011_0011_1101_0000
  */
@@ -57,7 +57,7 @@ wire we = op[6];
  * Since we need 8 bits total, we use 2 memories, and only use
  * 4 bits from each.
  */
-RAM32M #(.INIT_A(64'h2236DE), .INIT_B(64'h3E33DC)) ram_l(
+RAM32M #(.INIT_A(64'h2236DE), .INIT_B(64'h3E33C0)) ram_l(
     .ADDRA(reg_rd),
     .ADDRB(reg_rd),
     .ADDRC(5'b0),
@@ -87,5 +87,10 @@ RAM32M #(.INIT_A(64'h3F33C0), .INIT_B(64'h3F33D0)) ram_h(
     .WE(we),
     .DOA(DO[5:4]),
     .DOB(DO[7:6]) );
+
+wire [7:0] X = { ram_h.mem_b[1:0], ram_h.mem_a[1:0], ram_l.mem_b[1:0], ram_l.mem_a[1:0] };
+wire [7:0] Y = { ram_h.mem_b[3:2], ram_h.mem_a[3:2], ram_l.mem_b[3:2], ram_l.mem_a[3:2] };
+wire [7:0] A = { ram_h.mem_b[5:4], ram_h.mem_a[5:4], ram_l.mem_b[5:4], ram_l.mem_a[5:4] };
+wire [7:0] S = { ram_h.mem_b[7:6], ram_h.mem_a[7:6], ram_l.mem_b[7:6], ram_l.mem_a[7:6] };
 
 endmodule
