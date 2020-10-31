@@ -119,11 +119,18 @@ reg8 abl(
 
 /*
  * update PCL (program counter low)
+ *
+ * if( ld_pc )
+ *     PCL <= ABL + inc_pc
  * 
  */
-wire [8:0] PCL1 = ABL + inc_pc;
+wire [7:0] PCL1;
 
-assign pcl_co = PCL1[8];
+inc8 plc_inc( 
+    .I(ABL),
+    .CI(inc_pc),
+    .O(PCL1),
+    .CO(pcl_co) );
 
 /* 
  * PCL register

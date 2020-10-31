@@ -95,12 +95,12 @@ reg8 abh(
  * if( ld_pc )
  *     PCH <= ABH + inc_pc
  */
-add8_3 #(.INIT(64'haaaaaaaa00000000)) pch_inc(
+
+wire [7:0] PCH1;
+
+inc8 pch_inc(
     .CI(inc_pc),
-    .I0(ABH),
-    .I1(8'b0),
-    .I2(8'b0),
-    .op(2'b00),
+    .I(ABH),
     .O(PCH1) );
 
 /* 
