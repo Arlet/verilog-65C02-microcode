@@ -72,19 +72,12 @@ reg8 ahl(
  *  endcase
  */ 
 
-genvar i;
-generate for (i = 0; i < 8; i = i + 1 )
-begin: adl_base_mux
-LUT6 #(.INIT(64'haaccf000_00ccf000)) adl_base_mux(
-    .O(base[i]), 
-    .I0(DB[i]), 
-    .I1(AHL[i]), 
-    .I2(PCL[i]), 
-    .I3(op[2]), 
-    .I4(op[3]), 
-    .I5(cond) );
-end
-endgenerate
+mux8_3 #(.INIT(64'haaccf000_00ccf000)) adl_base_mux(
+    .O(base),
+    .I0(DB),
+    .I1(AHL),
+    .I2(PCL),
+    .op({cond, op[3:2]}) );
 
 /*   
  * Second stage. Add offset.

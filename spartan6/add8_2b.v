@@ -1,9 +1,12 @@
 /*
  * add8_2b: 8 bit adder with 2 inputs, and 3 operation select bits.
+ * The 'b' version uses "INIT0" string for bit 0, and "INIT1" for
+ * the remaining 7 bits.
  *
  * (C) Arlet Ottens <arlet@c-scape.nl>
  */
-module add8_2(
+
+module add8_2b(
     input CI,
     input [7:0] I0,
     input [7:0] I1,
@@ -13,7 +16,8 @@ module add8_2(
     output [7:0] CARRY
     );
 
-    parameter INIT = 64'h0;
+    parameter INIT0 = 64'h0;
+    parameter INIT1 = 64'h0;
 
 wire [7:0] P;       // carry propagate
 wire [7:0] G;       // carry generate
@@ -21,6 +25,8 @@ wire [7:0] G;       // carry generate
 genvar i;
 generate for (i = 0; i < 8; i = i + 1 )
 begin : add
+parameter [63:0] INIT = i ? INIT1 : INIT0;
+
 LUT6_2 #(.INIT(INIT)) add(
     .O6(P[i]),
     .O5(G[i]),

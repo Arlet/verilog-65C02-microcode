@@ -1,3 +1,9 @@
+/*
+ * add8_3:
+ *
+ * 8 bit adder with 3 inputs and 2 operation select bits
+ *
+ */
 module add8_3(
     input CI,
     input [7:0] I0,
@@ -9,8 +15,6 @@ module add8_3(
     );
 
     parameter INIT = 64'h0;
-
-initial $display( "INIT %h", INIT );
 
 wire [7:0] P;       // carry propagate
 wire [7:0] G;       // carry generate
