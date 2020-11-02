@@ -3,7 +3,7 @@
  * D-flipflop with enable and synchronous reset.
  */
 module FDRE(
-    output Q, 
+    output reg Q, 
     input C, 
     input CE, 
     input D, 

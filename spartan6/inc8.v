@@ -1,5 +1,7 @@
 /*
  * inc8 : 8 bit incrementer using LUT5s
+ *
+ * (C) Arlet Ottens <arlet@c-scape.nl>
  */
 
 module inc8(

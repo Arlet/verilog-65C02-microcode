@@ -119,7 +119,7 @@ reg8 abl(
  */
 wire [7:0] PCL1;
 
-inc8 plc_inc( 
+inc8 pcl_inc( 
     .I(ABL),
     .CI(inc_pc),
     .O(PCL1),
