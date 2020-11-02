@@ -36,13 +36,13 @@ reg [7:0] M;                            // registered value of DB
  * Address Bus signals 
  */
 
-wire [12:0] ab_op;
-wire inc_pc = ab_op[12];                // set if PC needs increment
+wire [11:0] ab_op;
+wire inc_pc = ab_op[11];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
-wire ld_pc = ab_op[11];                 // load enable for PC 
-wire ld_ahl = ab_op[10];                // load enable for AHL
-wire [3:0] abh_op = ab_op[9:6];         // ABH operation
-wire [4:0] abl_op = ab_op[5:1];         // ABL operation
+wire ld_pc = ab_op[10];                 // load enable for PC 
+wire ld_ahl = ab_op[9];                 // load enable for AHL
+wire [3:0] abh_op = ab_op[9:5];         // ABH operation
+wire [3:0] abl_op = ab_op[4:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
 wire abh_ci = abl_co;

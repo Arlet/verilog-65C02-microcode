@@ -12,7 +12,7 @@ module abl(
     output CO,              // carry output
     input [7:0] DB,         // Data Bus 
     input [7:0] REG,        // output from register file
-    input [4:0] op,         // operation
+    input [3:0] op,         // operation
     input ld_ahl,           // indicates whether AHL should be loaded
     input ld_pc,            // indicates whether PCL should be loaded
     input inc_pc,           // indicates whether PCL should be incremented
