@@ -155,7 +155,7 @@ always @(*)
  * ALU carry in and shift in
  */
 always @(*)
-    case( alu_op[6:5] )
+    case( alu_op[1:0] )
         2'b00:          {alu_si, alu_ci} = 2'b00;
         2'b01:          {alu_si, alu_ci} = 2'b01;
         2'b10:          {alu_si, alu_ci} = {C, 1'b0};
@@ -170,7 +170,7 @@ alu alu(
     .SI(alu_si),
     .R(R),
     .M(M),
-    .op(alu_op[4:0]),
+    .op(alu_op[6:2]),
     .V(alu_v),
     .adjh(adjh),
     .adjl(adjl),

@@ -52,18 +52,13 @@ module ctl(
     output B,
     output reg [11:0] ab_op );
 
-wire [2:0] adder;
-wire [1:0] shift;
-wire [1:0] ci;
-wire [3:0] src;
-wire [2:0] dst;
+wire [30:0] control;
 
 assign flags = {control[30:29], control[7:0]};
-assign alu_op = { ci, shift, adder };
 assign reg_op = control[21:15];
+assign alu_op = control[14:8];
 
 reg [8:0] pc;
-wire [30:0] control;
 reg [4:0] finish;   // finishing code
 
 microcode rom(
@@ -120,13 +115,6 @@ always @(posedge clk)
         finish <= control[14:10];
 
 /*
- * control bits for ALU
- */
-assign shift = control[14:13];
-assign adder = control[12:10];
-assign ci    = control[9:8];
-
-/*
  * take B from CI control bits. We only care about the 'B'
  * bit when pushing the status bits to the stack. At that
  * time we don't use the ALU carry bits.
@@ -156,6 +144,9 @@ wire abl_ci = control[26];
 
 wire [3:0] ab_mode = control[27:24];
 
+/* doing backwards branch */
+wire back = cond & DB[7];
+
 always @(*)
     case( ab_mode )           //             IPH      ABH  ABL SEL  ABL_OP ABL CI
         4'b0000:                ab_op = { 3'b001, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 0
@@ -164,9 +155,7 @@ always @(*)
         4'b0011:                ab_op = { 3'b111, 4'b0000, abl_sel, 2'b01, abl_ci };  // {00, DB+REG}
         4'b0100:                ab_op = { 3'b011, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 1
         4'b0101:                ab_op = { 3'b011, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP+1}
-        4'b0111: if( cond )                                                           // branch if true
-                    if( DB[7] ) ab_op = { 3'b011, 4'b0111, abl_sel, 2'b11, abl_ci };  // {AB-1, AB} + DB + 1
-                    else        ab_op = { 3'b011, 4'b0110, abl_sel, 2'b11, abl_ci };  // {AB+0, AB} + DB + 1
+        4'b0111: if( back )     ab_op = { 3'b011, 4'b0111, abl_sel, 2'b11, abl_ci };  // {AB-1, AB} + DB + 1
                  else           ab_op = { 3'b011, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 1
         4'b1000:                ab_op = { 3'b000, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP}, keep PC
         4'b1001:                ab_op = { 3'b111, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP}, store PC+1
