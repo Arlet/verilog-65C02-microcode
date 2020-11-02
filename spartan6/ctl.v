@@ -54,9 +54,20 @@ module ctl(
 
 wire [30:0] control;
 
+/*
+ * operation for DO (data out)
+ */
+assign do_op = control[30:29];
 assign flags = {control[30:29], control[7:0]};
 assign reg_op = control[21:15];
 assign alu_op = control[14:8];
+
+/*
+ * take B from CI control bits. We only care about the 'B'
+ * bit when pushing the status bits to the stack. At that
+ * time we don't use the ALU carry bits.
+ */
+assign B = control[8];
 
 reg [8:0] pc;
 reg [4:0] finish;   // finishing code
@@ -65,11 +76,6 @@ microcode rom(
     .clk(clk),
     .addr(pc),
     .data(control) );
-
-/*
- * operation for DO (data out)
- */
-assign do_op = control[30:29];
 
 /*
  * sync indicates when new instruction is decoded
@@ -89,7 +95,24 @@ assign sync = (control[23:22] == 2'b00);
 
 wire take_irq = irq & ~I;
 
-// TODO : use 3-bit control signal instead.
+/* 
+ * 9 bit address in microcode ROM (the 'pc')
+ *
+ *    8   7   6   5   4   3   2   1   0
+ *  +---+---+---+---+---+---+---+---+---+
+ *  | 0 |           opcode (DB)         |   opcode lookup
+ *  +---+---+---+---+---+---+---+---+---+
+ *  | 1 | 0   1   1   0   0   0   0   0 |   RST handler
+ *  +---+---+---+---+---+---+---+---+---+
+ *  | 1 | 0   1   1   0   1   0   0   0 |   IRQ handler
+ *  +---+---+---+---+---+---+---+---+---+
+ *  | 1 | D |        jmp next           |   next instruction 
+ *  +---+---+---+---+---+---+---+---+---+
+ *  | 1 | D | 1   0 |      finish       |   finish handler 
+ *  +---+---+---+---+---+---+---+---+---+
+ *
+ */
+
 always @(*)
     if( reset )
         pc = 9'h160;
@@ -114,12 +137,6 @@ always @(posedge clk)
     if( control[23] )
         finish <= control[14:10];
 
-/*
- * take B from CI control bits. We only care about the 'B'
- * bit when pushing the status bits to the stack. At that
- * time we don't use the ALU carry bits.
- */
-assign B = control[8];
 
 /*
  * The ABL/ABH modules need 12 bits of control signals, but only in a limited
@@ -133,19 +150,9 @@ assign B = control[8];
 wire [1:0] abl_sel = control[25:24];
 wire abl_ci = control[26];
 
-/*
- * ABH SEL      ADD
- *
- * 00   00      +0
- * 01   ABH     +1
- * 10   PCH     +CI
- * 11   DB      -1+CI
- */
-
 wire [3:0] ab_mode = control[27:24];
 
-/* doing backwards branch */
-wire back = cond & DB[7];
+wire back = cond & DB[7];     // doing backwards branch 
 
 always @(*)
     case( ab_mode )           //             IPH      ABH  ABL SEL  ABL_OP ABL CI
