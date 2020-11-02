@@ -50,7 +50,7 @@ module ctl(
     input I,
     input D,
     output B,
-    output reg [12:0] ab_op );
+    output reg [11:0] ab_op );
 
 wire [2:0] adder;
 wire [1:0] shift;
@@ -142,7 +142,7 @@ assign B = control[8];
  * of the conditional branches, and the branch direction (DB[7])
  */
 
-wire [2:0] abl_sel = control[26:24];
+wire [1:0] abl_sel = control[25:24];
 
 always @(*)
     case( control[27:24] )    //             IPH_ABH______________ABL_CI
