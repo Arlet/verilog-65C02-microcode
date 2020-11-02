@@ -10,6 +10,7 @@
  * This module also has all the flag registers, and does the flag
  * updates.
  */
+
 module alu( 
     input clk,              // clk
     input sync,             // opcode sync
@@ -19,19 +20,20 @@ module alu(
     input [9:0] flag_op,    // 10-bit flag operation select
     input ld_m,             // load enable for M
     input adj_m,            // load BCD adjustment
-    output reg V,           // overflow output
-    output reg C,           // carry flag
-    output reg Z,           // zero flag
-    output reg N,           // negative flag
-    output reg I,           // interrupt flag
-    output reg D,           // decimal flag
+    input B,                // BRK flag
+    output [7:0] P,         // flags register
     output reg cond,        // condition code 
     output reg [7:0] OUT,   // data out
     output reg CO           // carry out
 );
 
 reg [7:0] M;
-reg CI, SI;
+wire [7:0] AI = R;          // A input of ALU
+reg [7:0] BI;               // B input of ALU
+reg CI, SI;                 // carry in/shift in
+
+reg N, V, D, I, Z, C;
+assign P = { N, V, 1'b1, B, D, I, Z, C };
 
 /*
  * carry in/shift in 
@@ -81,11 +83,16 @@ wire [7:0] carry;
 
 add8_2 #(.INIT(64'h293c668e04c08000)) alu_adder (
     .CI(CI),
-    .I0(M),
-    .I1(R),
+    .I0(BI),
+    .I1(AI),
     .op(op[4:2]),
     .O(add),
     .CARRY(carry) );
+
+/*
+ * carry out bit
+ */
+wire C8 = carry[7];
 
 /*
  * distinguish ADC/SBC, not valid when doing
@@ -99,7 +106,6 @@ wire SBC = op[4];
  */
 wire BC4 = SBC ^ carry[3];
 wire BC8 = SBC ^ carry[7];
-wire C8 = carry[7];
 
 /*
  * decimal half carry, is set when lower nibble is >= 10
@@ -146,9 +152,9 @@ LUT5 #(.INIT(32'hf0ccaaaa)) out7(.O(OUT[7]), .I0(add[7]), .I1(add[6]), .I2(SI), 
 LUT5 #(.INIT(32'hf0ccaaaa)) out8(.O(CO),     .I0(C8),     .I1(add[7]), .I2(add[0]), .I3(op[5]), .I4(op[6]));
 
 /*
- * M register update. The M register holds the most
- * recent data on the bus. It feeds into the ALU, 
- * and also into flag updates.
+ * BI register update. The BI register usually holds the most
+ * recent data on the bus, but it's also used to hold BCD
+ * adjustment terms.
  */
 
 wire l = adjl;
@@ -156,9 +162,18 @@ wire h = adjh;
 
 always @(posedge clk)
     if( sync )
-        M <= DB;
+        BI <= DB;
     else if( ld_m )
-        M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
+        BI <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
+
+/*
+ * M register update. The M register holds a copy of the
+ * DB value.
+ */
+
+always @(posedge clk)
+    if( sync | ld_m )
+        M <= DB;
 
 /*
  * update C(arry) flag

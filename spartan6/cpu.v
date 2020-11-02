@@ -30,8 +30,6 @@ assign AD = {ADH, ADL};
  */
 wire [7:0] DB = DI;                     // data bus low (alias for DB)
 
-// reg [7:0] M;                            // registered value of DB
-
 /*
  * Address Bus signals 
  */
@@ -54,22 +52,16 @@ wire adj_m = do_op[1];                  // use M for BCD adjust
 /* 
  * ALU Signals
  */
-wire alu_v;                             // ALU overflow output
-wire alu_co;                            // ALU carry out
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
-wire adjh;                              // BCD adjust high
-wire adjl;                              // BCD adjust low 
 
 /*
  * Flags and flag updates
  */
 wire sync;                              // start of new instruction
-wire [9:0] flags;                       // flag control bits
+wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
-wire B, C, Z, N, V, D, I;               // processor status flags
-
-wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
+wire [7:0] P;                           // processor status flags
 
 /*
  * Register file signals
@@ -120,7 +112,6 @@ abh abh(
     .DB(DB)
 );
 
-
 /*
  * DO (Data Output) mux. The DO value goes out to
  * the data bus, but only if WE is asserted,
@@ -141,14 +132,10 @@ alu alu(
     .sync(sync),
     .DB(DB),
     .R(R),
-    .C(C),
-    .Z(Z),
-    .N(N),
-    .I(I),
-    .D(D),
-    .V(V),
+    .B(B),
+    .P(P),
     .op(alu_op),
-    .flag_op(flags),
+    .flag_op(flag_op),
     .cond(cond),
     .ld_m(ld_m),
     .adj_m(adj_m),
@@ -164,7 +151,7 @@ ctl ctl(
     .reset(RST),
     .cond(cond),
     .sync(sync),
-    .flags(flags),
+    .flags(flag_op),
     .alu_op(alu_op),
     .reg_op(reg_op),
     .ab_op(ab_op),
@@ -273,13 +260,13 @@ always @*
             default:      opcode = "___";
     endcase
 
-wire [7:0] B_ = B ? "B" : "-";
-wire [7:0] C_ = C ? "C" : "-";
-wire [7:0] D_ = D ? "D" : "-";
-wire [7:0] I_ = I ? "I" : "-";
-wire [7:0] N_ = N ? "N" : "-";
-wire [7:0] V_ = V ? "V" : "-";
-wire [7:0] Z_ = Z ? "Z" : "-";
+wire [7:0] B_ = alu.B ? "B" : "-";
+wire [7:0] C_ = alu.C ? "C" : "-";
+wire [7:0] D_ = alu.D ? "D" : "-";
+wire [7:0] I_ = alu.I ? "I" : "-";
+wire [7:0] N_ = alu.N ? "N" : "-";
+wire [7:0] V_ = alu.V ? "V" : "-";
+wire [7:0] Z_ = alu.Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
 wire [7:0] Q_ = IRQ ? "I" : "-";
 
@@ -296,10 +283,10 @@ wire [7:0] S = regfile.S;
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       ctl.ab_mode, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, adjh, adjl,
-       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+       ctl.ab_mode, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
+       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end
