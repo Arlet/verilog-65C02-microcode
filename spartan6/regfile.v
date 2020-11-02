@@ -22,9 +22,9 @@ reg [7:0] regs[15:0];                   // register file
  *   5 | 01 | INC
  *   6 | FF | DEC
  *   7 | 00 | zero
- *   8 | FA | NMI
- *   9 | FC | RST 
- *   A | FE | BRK 
+ *   8 | F9 | NMI   (+1 from CI)
+ *   9 | FB | RST   (+1 from CI)
+ *   A | FD | BRK   (+1 from CI)
  */
 
 /*
@@ -34,8 +34,8 @@ reg [7:0] regs[15:0];                   // register file
  *                  v 
  * addr:  A9876543210
  * ---------------------
- * 1:0    20203123132   10_0010_0011_0110_1101_1110 
- * 3:2    33203033000   11_1110_0011_0011_1100_0000 
+ * 1:0    13103123132   01_1101_0011_0110_1101_1110
+ * 3:2    32203033000   11_1010_0011_0011_1100_0000
  * 5:4    33303033000   11_1111_0011_0011_1100_0000
  * 7:6    33303033100   11_1111_0011_0011_1101_0000
  */
@@ -57,7 +57,7 @@ wire we = op[6];
  * Since we need 8 bits total, we use 2 memories, and only use
  * 4 bits from each.
  */
-RAM32M #(.INIT_A(64'h2236DE), .INIT_B(64'h3E33C0)) ram_l(
+RAM32M #(.INIT_A(64'h1D36DE), .INIT_B(64'h3A33C0)) ram_l(
     .ADDRA(reg_rd),
     .ADDRB(reg_rd),
     .ADDRC(5'b0),
