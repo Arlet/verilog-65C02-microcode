@@ -161,10 +161,10 @@ wire l = adjl;
 wire h = adjh;
 
 always @(posedge clk)
-    if( sync )
+    if( adj_m )
+        BI <= { 1'b0, h, h, 2'b0, l, l, 1'b0 };
+    else
         BI <= DB;
-    else if( ld_m )
-        BI <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
 /*
  * M register update. The M register holds a copy of the

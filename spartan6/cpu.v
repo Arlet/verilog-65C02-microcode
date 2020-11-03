@@ -62,6 +62,8 @@ wire sync;                              // start of new instruction
 wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
 wire [7:0] P;                           // processor status flags
+wire I = P[2];                          // take out I 
+wire D = P[3];                          // and D for controller 
 
 /*
  * Register file signals
