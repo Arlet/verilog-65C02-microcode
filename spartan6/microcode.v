@@ -1,12 +1,12 @@
 module microcode(
     input clk,
     input [8:0] addr,
-    output [30:0] data );
+    output [31:0] data );
 
 wire [31:0] DO;
 wire [3:0] DOP;
 
-assign data = DO[30:0];
+assign data = DO[31:0];
 
 RAMB16BWER #(.DATA_WIDTH_A(36)) rom(
     .CLKA(clk),

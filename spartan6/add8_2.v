@@ -9,6 +9,7 @@ module add8_2(
     input [7:0] I1,
     input [2:0] op,
     output [7:0] O,
+    output [7:0] O6,
     output CO,
     output [7:0] CARRY
     );
@@ -42,5 +43,12 @@ CARRY4 carry_l ( .CO(COL), .O(O[3:0]), .CI(CI),     .CYINIT(1'b0), .DI(G[3:0]), 
 CARRY4 carry_h ( .CO(COH), .O(O[7:4]), .CI(COL[3]), .CYINIT(1'b0), .DI(G[7:4]), .S(P[7:4]) );
 
 assign CO = CARRY[7];
+
+/* 
+ * also provide the O6 outputs. When doing addition, the O6 has the XOR
+ * of the two inputs, which may be useful in some cases. For instance, doing
+ * another XOR between O6 and O retrieves the carry into that bit.
+ */
+assign O6 = P;
 
 endmodule

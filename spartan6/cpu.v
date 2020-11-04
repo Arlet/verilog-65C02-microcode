@@ -46,7 +46,6 @@ wire abl_co;                            // ABL carry out
 wire abh_ci = abl_co;
 
 wire [1:0] do_op;                       // select for Data Output
-wire ld_m = ~do_op[0];                  // load enable for M register
 wire adj_m = do_op[1];                  // use M for BCD adjust
 
 /* 
@@ -54,6 +53,7 @@ wire adj_m = do_op[1];                  // use M for BCD adjust
  */
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
+wire ld_m;                              // load M register
 
 /*
  * Flags and flag updates
@@ -153,11 +153,12 @@ ctl ctl(
     .reset(RST),
     .cond(cond),
     .sync(sync),
-    .flags(flag_op),
+    .flag_op(flag_op),
     .alu_op(alu_op),
     .reg_op(reg_op),
     .ab_op(ab_op),
     .do_op(do_op),
+    .ld_m(ld_m),
     .I(I),
     .D(D),
     .B(B),
@@ -258,6 +259,7 @@ always @*
             8'b1111_1000: opcode = "SED";
             8'b111?_?110: opcode = "INC";
             8'b1101_1011: opcode = "STP";
+            8'b0000_0100: opcode = "TSB";
 
             default:      opcode = "___";
     endcase
@@ -273,6 +275,7 @@ wire [7:0] R_ = RST ? "R" : "-";
 wire [7:0] Q_ = IRQ ? "I" : "-";
 
 integer cycle;
+integer hang;
 
 always @( posedge clk )
     cycle <= cycle + 1;
@@ -282,12 +285,23 @@ wire [7:0] Y = regfile.Y;
 wire [7:0] A = regfile.A;
 wire [7:0] S = regfile.S;
 
+always @( posedge clk )
+    if( sync )
+        if( |flag_op )
+            hang <= 0;
+        else
+            hang <= hang + 1;
+
+always @(*)
+    if( hang > 20 )
+        $finish;
+
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H LD:%b OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       ctl.ab_mode, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
+       ld_m, ctl.ab_mode, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
