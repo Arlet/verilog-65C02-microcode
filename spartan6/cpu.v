@@ -268,7 +268,8 @@ always @*
             8'b1111_1000: opcode = "SED";
             8'b111?_?110: opcode = "INC";
             8'b1101_1011: opcode = "STP";
-            8'b0000_0100: opcode = "TSB";
+            8'b0000_?100: opcode = "TSB";
+            8'b0001_?100: opcode = "TRB";
 
             default:      opcode = "___";
     endcase
