@@ -38,11 +38,12 @@
 module ctl(
     input clk,
     input irq,
+    input nmi,
     input reset,
     output sync,
     input cond,
     input [7:0] DB,
-    output reg WE,
+    output WE,
     output [9:0] flag_op,
     output [6:0] alu_op,
     output [6:0] reg_op,
@@ -51,7 +52,7 @@ module ctl(
     input I,
     input D,
     output B,
-    output reg [11:0] ab_op );
+    output [11:0] ab_op );
 
 wire [31:0] control;
 
@@ -68,8 +69,9 @@ assign alu_op = control[14:8];
  */
 assign B = control[8];
 
-reg [8:0] pc;
-reg [4:0] finish;   // finishing code
+wire [8:0] pc;
+wire [4:0] finish_q;   // finishing code
+wire [4:0] finish_d;   // finishing code
 
 microcode rom(
     .clk(clk),
@@ -79,7 +81,9 @@ microcode rom(
 /*
  * sync indicates when new instruction is decoded
  */
-assign sync = (control[23:22] == 2'b00);
+// assign sync = (control[23:22] == 2'b00);
+
+LUT2 #(.INIT(4'b0001)) lut_sync( .O(sync), .I0(control[22]), .I1(control[23]) );
 
 /*
  * The microcontrol 'program counter'.
@@ -92,7 +96,9 @@ assign sync = (control[23:22] == 2'b00);
  * when 11 -> jump to next, but also save pointer to finishing code
  */
 
-wire take_irq = irq & ~I;
+wire take_irq;  // = irq & ~I
+
+LUT2 #(.INIT(4'b0010)) lut_take_irq( .O(take_irq), .I0(irq), .I1(I) );
 
 /* 
  * 9 bit address in microcode ROM (the 'pc')
@@ -105,6 +111,8 @@ wire take_irq = irq & ~I;
  *  +---+---+---+---+---+---+---+---+---+
  *  | 1 | 0   1   1   0   1   0   0   0 |   IRQ handler
  *  +---+---+---+---+---+---+---+---+---+
+ *  | 1 | 0   1   1   1   0   0   0   0 |   NMI handler
+ *  +---+---+---+---+---+---+---+---+---+
  *  | 1 | D |        jmp next           |   next instruction 
  *  +---+---+---+---+---+---+---+---+---+
  *  | 1 | D | 1   0 |      finish       |   finish handler 
@@ -112,64 +120,101 @@ wire take_irq = irq & ~I;
  *
  */
 
-always @(*)
-    if( reset )
-        pc = 9'h160;
-    else casez( {control[23:22], take_irq} )
-        3'b000:         pc = {1'b0, DB};                // look up next instruction at @000
-        3'b001:         pc = {9'h168};                  // take IRQ at @168
-        3'b?1?:         pc = {1'b1, D, control[6:0]};   // microcode at @100/@180
-        3'b10?:         pc = {1'b1, D, 2'b10, finish }; // finish code at @140/@1C0
-    endcase
+wire [2:0] sel_pc;
+
+/*
+ * sel_pc:
+ *
+ * 000 fetch
+ * 001 next
+ * 010 finish
+ * 100 IRQ
+ * 101 NMI
+ * 110 RST
+ */
+
+// encode next action in 3 bits
+
+LUT5 #(.INIT(32'hffff1110)) sel_pc2( .O(sel_pc[2]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
+LUT5 #(.INIT(32'hffff4444)) sel_pc1( .O(sel_pc[1]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
+LUT5 #(.INIT(32'h0000bbaa)) sel_pc0( .O(sel_pc[0]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
+
+wire [6:0] N = control[6:0];
+wire [4:0] F = finish_q;
+
+LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc8( .O(pc[8]), .I0(1'b0),  .I1(1'b1), .I2(1'b1), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc7( .O(pc[7]), .I0(DB[7]), .I1(D),    .I2(D),    .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc6( .O(pc[6]), .I0(DB[6]), .I1(N[6]), .I2(1'b1), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc5( .O(pc[5]), .I0(DB[5]), .I1(N[5]), .I2(1'b0), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h0000ff00_00f0ccaa)) pc4( .O(pc[4]), .I0(DB[4]), .I1(N[4]), .I2(F[4]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h000000ff_00f0ccaa)) pc3( .O(pc[3]), .I0(DB[3]), .I1(N[3]), .I2(F[3]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc2( .O(pc[2]), .I0(DB[2]), .I1(N[2]), .I2(F[2]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc1( .O(pc[1]), .I0(DB[1]), .I1(N[1]), .I2(F[1]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc0( .O(pc[0]), .I0(DB[0]), .I1(N[0]), .I2(F[0]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
 
 /*
  * bit 28 contains WE signal for next cycle
  */
+/*
 always @(posedge clk)
     WE <= control[28];
+*/
+
+FDRE ff_we( .C(clk), .CE(1'b1), .R(1'b0), .D(control[28]), .Q(WE) );
 
 /*
  * if bit 23 is set, the ALU is not needed in this cycle
  * so the same bits are used to store location of finisher code
  */
+/*
 always @(posedge clk)
     if( control[23] )
         finish <= control[14:10];
+*/
 
+LUT5 #(.INIT(32'hf0f0aaaa)) fin0( .O(finish_d[0]), .I0(finish_q[0]), .I1(finish_q[1]), .I2(control[10]), .I3(control[11]), .I4(control[23]) );
+LUT5 #(.INIT(32'hff00cccc)) fin1( .O(finish_d[1]), .I0(finish_q[0]), .I1(finish_q[1]), .I2(control[10]), .I3(control[11]), .I4(control[23]) );
+LUT5 #(.INIT(32'hf0f0aaaa)) fin2( .O(finish_d[2]), .I0(finish_q[2]), .I1(finish_q[3]), .I2(control[12]), .I3(control[13]), .I4(control[23]) );
+LUT5 #(.INIT(32'hff00cccc)) fin3( .O(finish_d[3]), .I0(finish_q[2]), .I1(finish_q[3]), .I2(control[12]), .I3(control[13]), .I4(control[23]) );
+LUT5 #(.INIT(32'hf0f0aaaa)) fin4( .O(finish_d[4]), .I0(finish_q[4]), .I1(finish_q[4]), .I2(control[14]), .I3(control[14]), .I4(control[23]) );
+
+FDRE ff_fin0( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[0]), .Q(finish_q[0]) );
+FDRE ff_fin1( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[1]), .Q(finish_q[1]) );
+FDRE ff_fin2( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[2]), .Q(finish_q[2]) );
+FDRE ff_fin3( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[3]), .Q(finish_q[3]) );
+FDRE ff_fin4( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[4]), .Q(finish_q[4]) );
 
 /*
- * The ABL/ABH modules need 12 bits of control signals, but only in a limited
- * number of total options.
- *
  * In order to compress those in the control word, the code below expands
- * the 4 control bits into 12, optionally taking into account the output
+ * the 4 control bits into 9, optionally taking into account the output
  * of the conditional branches, and the branch direction (DB[7])
  */
 
 wire [1:0] abl_sel = control[25:24];
 wire abl_ci = control[26];
 
-wire [3:0] ab_mode = control[27:24];
+// encoded address bus signal
+wire [3:0] ab = control[27:24];
 
-wire back = cond & DB[7];     // doing backwards branch 
+wire inc_pc;
+wire ld_pc;
+wire ld_ahl;
+wire [1:0] abl_op;
+wire [3:0] abh_sel;
 
-always @(*)
-    case( ab_mode )           //             IPH      ABH  ABL SEL  ABL_OP ABL CI
-        4'b0000:                ab_op = { 3'b001, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 0
-        4'b0001:                ab_op = { 3'b000, 4'b1010, abl_sel, 2'b10, abl_ci };  // PC
-        4'b0010:                ab_op = { 3'b111, 4'b1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG}, store PC
-        4'b0011:                ab_op = { 3'b111, 4'b0000, abl_sel, 2'b01, abl_ci };  // {00, DB+REG}
-        4'b0100:                ab_op = { 3'b011, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 1
-        4'b0101:                ab_op = { 3'b011, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP+1}
-        4'b0111: if( back )     ab_op = { 3'b011, 4'b0111, abl_sel, 2'b11, abl_ci };  // {AB-1, AB} + DB + 1
-                 else           ab_op = { 3'b011, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB + 1
-        4'b1000:                ab_op = { 3'b000, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP}, keep PC
-        4'b1001:                ab_op = { 3'b111, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP}, store PC+1
-        4'b1010:                ab_op = { 3'b001, 4'b1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG}, keep PC
-        4'b1011:                ab_op = { 3'b010, 4'b0001, abl_sel, 2'b00, abl_ci };  // {01, SP}
-        4'b1100:                ab_op = { 3'b001, 4'b0110, abl_sel, 2'b11, abl_ci };  // AB+1, keep PC
-        4'b1111:                ab_op = { 3'b000, 4'b0011, abl_sel, 2'b00, abl_ci };  // {FF, REG}
-        default:                ab_op = { 3'bxxx, 4'bxxxx, abl_sel, 2'bxx, abl_ci };
-    endcase
+// all same inputs for packing 
+LUT5 #(.INIT(32'h020c)) inc_pc_dec( .O(inc_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h0afc)) ld_pc_dec( .O(ld_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h76fd)) ld_ahl_dec( .O(ld_ahl), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h70d3)) abl_op1( .O(abl_op[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h74dd)) abl_op0( .O(abl_op[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h0406)) abh_sel3( .O(abh_sel[3]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h74d5)) abh_sel2( .O(abh_sel[2]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'hf4d7)) abh_sel1( .O(abh_sel[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+
+// abh_sel0 depends on backwards branches
+LUT6 #(.INIT(64'h8be08b608b608b60)) abh_sel0( .O(abh_sel[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(cond), .I5(DB[7]) );
+
+assign ab_op = { inc_pc, ld_pc, ld_ahl, abh_sel, abl_sel, abl_op, abl_ci };
 
 endmodule

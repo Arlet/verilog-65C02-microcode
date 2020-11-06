@@ -54,6 +54,7 @@ wire adj_m = do_op[1];                  // use M for BCD adjust
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
 wire ld_m;                              // load M register
+wire mask_irq;                          // indicates whether IRQs are masked
 
 /*
  * Flags and flag updates
@@ -137,6 +138,7 @@ alu alu(
     .B(B),
     .P(P),
     .op(alu_op),
+    .mask_irq(mask_irq),
     .flag_op(flag_op),
     .cond(cond),
     .ld_m(ld_m),
@@ -150,6 +152,7 @@ alu alu(
 ctl ctl( 
     .clk(clk),
     .irq(IRQ),
+    .nmi(NMI),
     .reset(RST),
     .cond(cond),
     .sync(sync),
@@ -159,7 +162,7 @@ ctl ctl(
     .ab_op(ab_op),
     .do_op(do_op),
     .ld_m(ld_m),
-    .I(I),
+    .I(mask_irq),
     .D(D),
     .B(B),
     .WE(WE),
@@ -292,16 +295,18 @@ always @( posedge clk )
         else
             hang <= hang + 1;
 
+/*
 always @(*)
     if( hang > 20 )
         $finish;
+*/
 
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H LD:%b OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       ld_m, ctl.ab_mode, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
+      $display( "%4d %s%s %b.%3H %b F:%h N:%h LD:%b OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, R_, Q_, ctl.control[21:20], ctl.pc, ctl.sel_pc, ctl.F, ctl.N,
+       ld_m, ctl.ab, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );

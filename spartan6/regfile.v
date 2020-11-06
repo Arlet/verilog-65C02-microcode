@@ -88,9 +88,11 @@ RAM32M #(.INIT_A(64'h3F33C0), .INIT_B(64'h3F33D0)) ram_h(
     .DOA(DO[5:4]),
     .DOB(DO[7:6]) );
 
+`ifdef SIM
 wire [7:0] X = { ram_h.mem_b[1:0], ram_h.mem_a[1:0], ram_l.mem_b[1:0], ram_l.mem_a[1:0] };
 wire [7:0] Y = { ram_h.mem_b[3:2], ram_h.mem_a[3:2], ram_l.mem_b[3:2], ram_l.mem_a[3:2] };
 wire [7:0] A = { ram_h.mem_b[5:4], ram_h.mem_a[5:4], ram_l.mem_b[5:4], ram_l.mem_a[5:4] };
 wire [7:0] S = { ram_h.mem_b[7:6], ram_h.mem_a[7:6], ram_l.mem_b[7:6], ram_l.mem_a[7:6] };
+`endif
 
 endmodule

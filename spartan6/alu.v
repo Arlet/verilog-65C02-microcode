@@ -21,6 +21,7 @@ module alu(
     input ld_m,             // load enable for M
     input adj_m,            // load BCD adjustment
     input B,                // BRK flag
+    output mask_irq,        // one cycle early I flag notification 
     output [7:0] P,         // flags register
     output cond,            // condition code 
     output [7:0] OUT,       // data out
@@ -202,8 +203,6 @@ reg8 m_reg(
  * update C(arry) flag
  */
 
-wire plp = flag_op[2];
-
 /*
  * the CO1 signal is the ALU carry out, delayed
  * by one cycle. This is needed for the BCD operations
@@ -232,7 +231,7 @@ always @(posedge clk)
 
 wire n_flag;
 
-LUT5 #(.INIT(32'hf0ccccaa)) nflag( .O(n_flag), .I0(N), .I1(M[7]), .I2(OUT[7]), .I3(flag_op[3]), .I4(flag_op[4]) );
+LUT6 #(.INIT(64'hf0ccccaaaaaaaaaa)) nflag( .O(n_flag), .I0(N), .I1(M[7]), .I2(OUT[7]), .I3(flag_op[3]), .I4(flag_op[4]), .I5(sync) );
 
 FDRE n( .C(clk), .CE(sync), .R(1'b0), .D(n_flag), .Q(N) );
 
@@ -308,14 +307,14 @@ always @(posedge clk)
 wire i_flag;
 
 LUT6 #(.INIT(64'hccccccccffaaf0aa)) iflag( .O(i_flag), .I0(I), .I1(M[2]), .I2(M[5]), .I3(flag_op[5]), .I4(flag_op[6]), .I5(flag_op[2]) );
-
 FDRE i( .C(clk), .CE(sync), .R(1'b0), .D(i_flag), .Q(I) );
 
 wire d_flag;
 
 LUT6 #(.INIT(64'hccccccccaaf0aaaa)) dflag( .O(d_flag), .I0(D), .I1(M[3]), .I2(M[5]), .I3(flag_op[5]), .I4(flag_op[6]), .I5(flag_op[2]) );
-
 FDRE d( .C(clk), .CE(sync), .R(1'b0), .D(d_flag), .Q(D) );
+
+assign mask_irq = i_flag;
 
 /*
 always @(posedge clk)
