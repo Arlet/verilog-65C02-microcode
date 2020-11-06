@@ -38,7 +38,7 @@ wire [7:0] base;
 
 reg8 ahl( 
     .clk(clk),
-    .EN(ld_ahl & rdy),
+    .EN(ld_ahl),
     .RST(1'b0),
     .D(DB),
     .Q(AHL) );
@@ -131,7 +131,7 @@ inc8 pcl_inc(
  */
 reg8 pcl( 
     .clk(clk),
-    .EN(ld_pc & rdy),
+    .EN(ld_pc),
     .RST(1'b0),
     .D(PCL1),
     .Q(PCL) );

@@ -136,7 +136,7 @@ always @(*)
 alu alu(
     .clk(clk),
     .rdy(RDY),
-    .sync(sync & RDY),
+    .sync(sync),
     .DB(DB),
     .R(R),
     .B(B),

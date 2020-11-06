@@ -41,9 +41,27 @@ reg [7:0] regs[15:0];                   // register file
  * 7:6    33303033100   11_1111_0011_0011_1101_0000
  */
 
+/*
+ * op bits:
+ * 
+ *   6   5   4   3   2   1   0
+ * +---+---+---+---+---+---+---+
+ * |WE |  dst  |  src register |
+ * +---+---+---+---+---+---+---+
+ * 
+ * Only registers 0..3 (X,Y,A,S) can be written. The other 
+ * registers are read-only.
+ */
+
 wire [4:0] reg_wr = {3'b000, op[5:4]};    // register file select
 wire [4:0] reg_rd = {1'b0,   op[3:0]};    // register file select
-wire we = op[6] & rdy;
+wire reg_we;
+
+/* 
+ *
+ * reg_we = op[6] & rdy     (only write when rdy=1)
+ */
+LUT2 #(.INIT(4'b1000)) lut_reg_we( .O(reg_we), .I0(op[6]), .I1(rdy) );
 
 /*
  * lower nibble of register file
@@ -68,7 +86,7 @@ RAM32M #(.INIT_A(64'h1D36DE), .INIT_B(64'h3A33C0)) ram_l(
     .DIC(2'b0),
     .DID(2'b0),
     .WCLK(clk),
-    .WE(we),
+    .WE(reg_we),
     .DOA(DO[1:0]),
     .DOB(DO[3:2]) );
 
@@ -85,7 +103,7 @@ RAM32M #(.INIT_A(64'h3F33C0), .INIT_B(64'h3F33D0)) ram_h(
     .DIC(2'b0),
     .DID(2'b0),
     .WCLK(clk),
-    .WE(we),
+    .WE(reg_we),
     .DOA(DO[5:4]),
     .DOB(DO[7:6]) );
 

@@ -57,11 +57,15 @@ module ctl(
 
 wire [31:0] control;
 
-assign ld_m = control[31];
 assign do_op = control[30:29];
 assign flag_op = {control[30:29], control[7:0]};
 assign reg_op = control[21:15];
 assign alu_op = control[14:8];
+
+/* 
+ * ld_m = control[31] & rdy
+ */
+LUT2 #(.INIT(4'b1000)) lut_ld_m( .O(ld_m), .I0(control[31]), .I1(rdy) );
 
 /*
  * take B from CI control bits. We only care about the 'B'
@@ -82,10 +86,10 @@ microcode rom(
 
 /*
  * sync indicates when new instruction is decoded
+ *
+ * sync = ~control[23] & ~control[22] & rdy;
  */
-// assign sync = (control[23:22] == 2'b00);
-
-LUT2 #(.INIT(4'b0001)) lut_sync( .O(sync), .I0(control[22]), .I1(control[23]) );
+LUT3 #(.INIT(8'b00010000)) lut_sync( .O(sync), .I0(control[22]), .I1(control[23]), .I2(rdy) );
 
 /*
  * The microcontrol 'program counter'.
@@ -98,8 +102,9 @@ LUT2 #(.INIT(4'b0001)) lut_sync( .O(sync), .I0(control[22]), .I1(control[23]) );
  * when 11 -> jump to next, but also save pointer to finishing code
  */
 
-wire take_irq;  // = irq & ~I
-
+/*
+ * take_irq = irq & ~I
+ */
 LUT2 #(.INIT(4'b0010)) lut_take_irq( .O(take_irq), .I0(irq), .I1(I) );
 
 /* 
@@ -157,11 +162,6 @@ LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc0( .O(pc[0]), .I0(DB[0]), .I1(N[0]), .I2(
 /*
  * bit 28 contains WE signal for next cycle
  */
-/*
-always @(posedge clk)
-    WE <= control[28];
-*/
-
 FDRE ff_we( .C(clk), .CE(rdy), .R(1'b0), .D(control[28]), .Q(WE) );
 
 /*
@@ -205,14 +205,14 @@ wire [1:0] abl_op;
 wire [3:0] abh_sel;
 
 // all same inputs for packing 
-LUT5 #(.INIT(32'h020c)) inc_pc_dec( .O(inc_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h0afc)) ld_pc_dec( .O(ld_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h76fd)) ld_ahl_dec( .O(ld_ahl), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h70d3)) abl_op1( .O(abl_op[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h74dd)) abl_op0( .O(abl_op[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h0406)) abh_sel3( .O(abh_sel[3]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'h74d5)) abh_sel2( .O(abh_sel[2]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
-LUT5 #(.INIT(32'hf4d7)) abh_sel1( .O(abh_sel[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(1'b0) );
+LUT5 #(.INIT(32'h020c0000)) inc_pc_dec( .O(inc_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h0afc0000)) ld_pc_dec( .O(ld_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h76fd0000)) ld_ahl_dec( .O(ld_ahl), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h70d30000)) abl_op1( .O(abl_op[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h74dd0000)) abl_op0( .O(abl_op[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h04060000)) abh_sel3( .O(abh_sel[3]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h74d50000)) abh_sel2( .O(abh_sel[2]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'hf4d70000)) abh_sel1( .O(abh_sel[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
 
 // abh_sel0 depends on backwards branches
 LUT6 #(.INIT(64'h8be08b608b608b60)) abh_sel0( .O(abh_sel[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(cond), .I5(DB[7]) );

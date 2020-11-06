@@ -183,7 +183,7 @@ LUT6 #(.INIT(64'he444eeee_eeeee444)) bi6( .O(BI6), .I0(adj_m), .I1(DB[6]), .I2(a
 
 reg8 bi_reg( 
     .clk(clk),
-    .EN(ld_m & rdy),
+    .EN(ld_m),
     .RST(1'b0),
     .D({BI7, BI6, BI5, BI4, BI3, BI2, BI1, BI0}),
     .Q(BI) );
@@ -195,7 +195,7 @@ reg8 bi_reg(
 
 reg8 m_reg( 
     .clk(clk),
-    .EN(ld_m & rdy),
+    .EN(ld_m),
     .RST(1'b0),
     .D(DB),
     .Q(M) );

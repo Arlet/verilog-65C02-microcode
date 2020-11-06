@@ -86,7 +86,7 @@ inc8 pch_inc(
  */
 reg8 pch( 
     .clk(clk),
-    .EN(ld_pc & rdy),
+    .EN(ld_pc),
     .RST(1'b0),
     .D(PCH1),
     .Q(PCH) );
