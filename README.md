@@ -7,10 +7,16 @@ to do that, the top-level "AD" signal represents the *next* address. When using 
 you should register the "AD" signals on the IO block as follows: ("AB" are the pad names) 
 
     always @(posedge clock)
-        AB <= AD;
+        if( RDY )
+            AB <= AD;
+
+When using the RDY signal, please note that the unregistered 'AD' outputs are not guaranteed to be stable while RDY=0. For example, 
+during a zeropage access, the DB input is fed back directly on the AD output. If you're deasserting RDY in your design, you must either
+use the registered 'AB' that use the RDY as clock enable, shown above, or you must read the AD output only on the first cycle of RDY=0, 
+and ignoring any changes while RDY is kept low.
 
 ## Design goals
-The main design goal is to minimize the slice count.  The first version will probably use a block RAM 
+The main design goal is to minimize the slice count.  The first version uses a block RAM 
 for microcode. 
 
 ## Code
@@ -22,13 +28,17 @@ Code is not complete. This is a work in progress.
 * abh.v implements the upper 8 bits of the address bus.
 * ctl.v does the instruction decoding and generation of all control signals.
 
+The Spartan6 directory uses Xilinx Spartan-6 specific instantiations. The generic directory has plain verilog that should run on any FPGA.
+
+Code has been tested with Verilator. 
+
 ## Status
 
-* All NMOS 6502 instructions added, and part of the 65C02 instructions.
-* Model passes Klaus Dormann's test suite for 6502 (with BCD disabled)
-* RST and IRQ implemented.
+* All CMOS/NMOS 6502 instructions added.
+* Model passes Klaus Dormann's test suite for 6502/65C02 (with BCD disabled)
+* RST, IRQ, RDY implemented.
 * NMI/RDY not yet implemented.
-* BCD support not yet implemented.
+* BCD support implemented using additional cycle. C/Z flags updated, N/V flags are unaffected.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle
