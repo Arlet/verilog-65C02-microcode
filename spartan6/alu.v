@@ -33,7 +33,6 @@ wire [7:0] M;
 wire [7:0] AI = R;          // A input of ALU
 wire [7:0] BI;              // B input of ALU
 wire CI, SI;                // carry in/shift in
-wire x;                     // don't care
 
 wire C, N, V, I, D, Z;
 assign P = { N, V, 1'b1, B, D, I, Z, C };
@@ -49,8 +48,8 @@ assign P = { N, V, 1'b1, B, D, I, Z, C };
  *   11   | 0   C
  */
 
-LUT5 #(.INIT(32'h8c)) ci(.O(CI), .I0(C), .I1(op[0]), .I2(op[1]), .I3(x), .I4(x));
-LUT5 #(.INIT(32'h20)) si(.O(SI), .I0(C), .I1(op[0]), .I2(op[1]), .I3(x), .I4(x));
+LUT3 #(.INIT(8'h8c)) ci(.O(CI), .I0(C), .I1(op[0]), .I2(op[1]));
+LUT3 #(.INIT(8'h20)) si(.O(SI), .I0(C), .I1(op[0]), .I2(op[1]));
 
 /*   
  * 1st stage, calculate adder result from the two operands:
@@ -192,7 +191,6 @@ reg8 bi_reg(
  * M register update. The M register holds a copy of the
  * DB value.
  */
-
 reg8 m_reg( 
     .clk(clk),
     .EN(ld_m),
@@ -201,154 +199,63 @@ reg8 m_reg(
     .Q(M) );
 
 /*
- * update C(arry) flag
- */
-
-/*
  * the CO1 signal is the ALU carry out, delayed
  * by one cycle. This is needed for the BCD operations
  * because a carry can occur in the main cycle, or in
  * the adjust cycle.
  */
 wire CO1; 
-
 FDRE co1( .C(clk), .CE(rdy), .R(1'b0), .D(CO), .Q(CO1) );
 
+/*
+ * flag updates
+ */
+
 wire c_flag;
+wire n_flag;
+wire z_flag;
+wire v_flag;
+wire i_flag;
+wire d_flag;
 
+// C flag
 LUT6 #(.INIT(64'hccfcf0aaaaaaaaaa)) cflag( .O(c_flag), .I0(C), .I1(CO), .I2(CO1), .I3(flag_op[0]), .I4(flag_op[1]), .I5(sync) );
-
 FDRE c( .C(clk), .CE(rdy), .R(1'b0), .D(c_flag), .Q(C) );
 
-/*
-always @(posedge clk)
-    if( sync )
-        casez( flag_op[1:0] )
-            2'b01 : C <= CO1;         // delayed ALU carry out 
-            2'b10 : C <= CO1 | CO;    // BCD carry
-            2'b11 : C <= CO;          // ALU carry out
-        endcase
-*/
-
-wire n_flag;
-
+// N flag
 LUT6 #(.INIT(64'hf0ccccaaaaaaaaaa)) nflag( .O(n_flag), .I0(N), .I1(M[7]), .I2(OUT[7]), .I3(flag_op[3]), .I4(flag_op[4]), .I5(sync) );
-
 FDRE n( .C(clk), .CE(sync), .R(1'b0), .D(n_flag), .Q(N) );
 
-/*
- * update N(egative) flag and Z(ero) flag
- *
- * The N/Z flags share two control bits in flags[4:3]
- *
- * 00 - do nothing
- * 01 - BIT (N <= M7, Z <= alu_out)
- * 10 - PLP
- * 11 - N/Z <= alu_out
- *
-always @(posedge clk)
-    if( sync )
-        casez( flag_op[4:3] )
-            2'b01 : N <= M[7];         // BIT (bit 7) 
-            2'b10 : N <= M[7];         // PLP
-            2'b11 : N <= OUT[7];       // ALU N flag 
-        endcase
- */
-
-/*
- * update Z(ero) flag
-always @(posedge clk)
-    if( sync )
-        case( {flag_op[9], flag_op[2]} )
-            2'b01 : Z <= M[1];         // PLP
-            2'b10 : Z <= z0 & z1;      // ALU == 0 
-        endcase
- */
-
-wire z_flag;
-
+// Z flag
 LUT6 #(.INIT(64'hff88f0ff0088f000)) zflag( .O(z_flag), .I0(z0), .I1(z1), .I2(M[1]), .I3(flag_op[2]), .I4(flag_op[9]), .I5(Z) );
 FDRE z( .C(clk), .CE(sync), .R(1'b0), .D(z_flag), .Q(Z) );
 
-/*
- * update (o)V(erflow) flag
- *
-always @(posedge clk)
-    if( sync )
-        case( flag_op[8:7] )
-            2'b01 : V <= C7 ^ C8;
-            2'b11 : V <= M[6];        // BIT/PLP
-        endcase
- */
-
-wire v_flag;
-
+// V flag 
 LUT6 #(.INIT(64'hccccaaaa0ff0aaaa)) vflag( .O(v_flag), .I0(V), .I1(M[6]), .I2(C7), .I3(C8), .I4(flag_op[7]), .I5(flag_op[8]) );
-
 FDRE v( .C(clk), .CE(sync), .R(1'b0), .D(v_flag), .Q(V) );
 
-/*
- * update I(nterrupt) flag and D(ecimal) flags
- *
- * The I/D flags share two control bits in flags[6:5]
- *
- * 00 - do nothing
- * 01 - CLI/SEI
- * 10 - CLD/SED
- * 11 - BRK
-always @(posedge clk)
-    if( sync )
-        casez( {plp, flag_op[6:5]} )
-            3'b001 : I <= M[5];         // CLI/SEI 
-            3'b011 : I <= 1;            // BRK
-            3'b1?? : I <= M[2];         // PLP
-        endcase
- */
-
-wire i_flag;
-
+// I flag
 LUT6 #(.INIT(64'hccccccccffaaf0aa)) iflag( .O(i_flag), .I0(I), .I1(M[2]), .I2(M[5]), .I3(flag_op[5]), .I4(flag_op[6]), .I5(flag_op[2]) );
 FDRE i( .C(clk), .CE(sync), .R(1'b0), .D(i_flag), .Q(I) );
 
-wire d_flag;
-
-LUT6 #(.INIT(64'hccccccccaaf0aaaa)) dflag( .O(d_flag), .I0(D), .I1(M[3]), .I2(M[5]), .I3(flag_op[5]), .I4(flag_op[6]), .I5(flag_op[2]) );
+// D flag
+LUT6 #(.INIT(64'hcccccccc00f0aaaa)) dflag( .O(d_flag), .I0(D), .I1(M[3]), .I2(M[5]), .I3(flag_op[5]), .I4(flag_op[6]), .I5(flag_op[2]) );
 FDRE d( .C(clk), .CE(sync), .R(1'b0), .D(d_flag), .Q(D) );
 
+/*
+ * masking IRQs is decided based on next I flag value, and not state of flop
+ * to avoid problem with nested interrupts.
+ */
 assign mask_irq = i_flag;
 
 /*
-always @(posedge clk)
-    if( sync )
-        casez( {plp, flag_op[6:5]} )
-            3'b010 : D <= M[5];         // CLD/SED 
-          //3'b011 : D <= 0;            // clear D in BRK
-            3'b1?0 : D <= M[3];         // PLP
-        endcase
-*/
-
+ * branch condition evaluation
+ */
 wire flag_set;                          // is conditional flag set ?
 wire uncond;                            // unconditional
 
 LUT6 #(.INIT(64'haaaaccccf0f0ff00)) cond0( .O(flag_set), .I0(Z), .I1(C), .I2(V), .I3(N), .I4(M[6]), .I5(M[7]) );
 LUT5 #(.INIT(32'hfffeffff)) odd0( .O(uncond), .I0(M[0]), .I1(M[1]), .I2(M[2]), .I3(M[3]), .I4(M[4]) );
 LUT5 #(.INIT(32'hedededed)) cond1( .O(cond), .I0(flag_set), .I1(uncond), .I2(M[5]), .I3(x), .I4(x) );
-
-/*
- * branch condition. 
-always @(*)
-    if( M[0] | M[1] | M[2] )  cond = 1;      // non-conditional instructions
-    else casez( M[7:4] )
-        4'b000?:        cond = ~N;     // BPL
-        4'b001?:        cond = N;      // BMI
-        4'b010?:        cond = ~V;     // BVC
-        4'b011?:        cond = V;      // BVS
-        4'b1000:        cond = 1;      // BRA
-        4'b100?:        cond = ~C;     // BCC
-        4'b101?:        cond = C;      // BCS
-        4'b110?:        cond = ~Z;     // BNE
-        4'b111?:        cond = Z;      // BEQ
-    endcase
- */
 
 endmodule

@@ -5,18 +5,17 @@
  *
  */
 
-module cpu( clk, RST, AD, DI, DO, WE, IRQ, NMI, RDY, debug );
-
-input clk;              // CPU clock
-input RST;              // RST signal
-output [15:0] AD;       // address bus (combinatorial) 
-input [7:0] DI;         // data bus input
-output reg [7:0] DO;    // data bus output 
-output WE;              // write enable
-input IRQ;              // interrupt request
-input NMI;              // non-maskable interrupt request
-input RDY;              // Ready signal. Pauses CPU when RDY=0
-input debug;            // debug for simulation
+module cpu( 
+    input clk,              			// CPU clock
+    input RST,              			// RST signal
+    output [15:0] AD,       			// address bus (combinatorial) 
+    input [7:0] DI,         			// data bus input
+    output reg [7:0] DO,    			// data bus output 
+    output WE,              			// write enable
+    input IRQ,              			// interrupt request
+    input NMI,              			// non-maskable interrupt request
+    input RDY,              			// Ready signal. Pauses CPU when RDY=0
+    input debug );          			// debug for simulation
 
 wire [7:0] ADH;                         // address bus high
 wire [7:0] ADL;                         // address bus low 
@@ -28,7 +27,7 @@ assign AD = {ADH, ADL};
 /*
  * databus
  */
-wire [7:0] DB = DI;                     // data bus low (alias for DB)
+wire [7:0] DB = DI;                     // data bus (alias for DB)
 
 /*
  * Address Bus signals 
