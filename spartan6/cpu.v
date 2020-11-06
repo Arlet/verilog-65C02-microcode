@@ -62,8 +62,7 @@ wire sync;                              // start of new instruction
 wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
 wire [7:0] P;                           // processor status flags
-wire I = P[2];                          // take out I 
-wire D = P[3];                          // and D for controller 
+wire D = P[3];                          // take out D for controller 
 
 /*
  * Register file signals
@@ -309,7 +308,7 @@ always @(*)
 */
 
 always @( posedge clk ) begin
-      //if( !debug || cycle[10:0] == 0 )
+      if( !debug || cycle[10:0] == 0 )
       $display( "%4d %s%s%s %b.%3H LD:%b OP:%b AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, W_, R_, Q_, ctl.control[21:20], ctl.pc,  
        ld_m, ctl.ab, AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 

@@ -102,7 +102,8 @@ add8_3 #(.INIT(64'h5aaa66cc_a0008800)) abl_add(
 /* 
  * ABL register
  *
- * ABL <= ADL
+ * if( RDY )
+ *    ABL <= ADL
  */ 
 reg8 abl( 
     .clk(clk),

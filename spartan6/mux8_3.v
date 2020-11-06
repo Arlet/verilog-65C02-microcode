@@ -1,8 +1,10 @@
 /*
  * mux8_3:
  *
- * 8 bit mux with 3 inputs and 3 operation select bits
+ * 8 bit mux with 3 inputs and 3 operation select bits. The exact 
+ * functionality depends on the INIT string.
  *
+ * (C) Arlet Ottens <arlet@c-scape.nl>
  */
 module mux8_3(
     input [7:0] I0,
