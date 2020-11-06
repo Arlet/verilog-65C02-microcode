@@ -38,7 +38,7 @@ Code has been tested with Verilator.
 * Model passes Klaus Dormann's test suite for 6502/65C02 (with BCD disabled)
 * RST, IRQ, RDY implemented.
 * NMI not yet implemented.
-* BCD support implemented using additional cycle. C/Z flags updated, N/V flags are unaffected.
+* BCD support implemented using additional cycle. N/C/Z flags updated, V flag unaffected.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle
