@@ -7,6 +7,7 @@
 
 module abl( 
     input clk,
+    input rdy, 
     input CI,               // carry input
     input cond,             // condition code input
     output CO,              // carry output
@@ -37,7 +38,7 @@ wire [7:0] base;
 
 reg8 ahl( 
     .clk(clk),
-    .EN(ld_ahl),
+    .EN(ld_ahl & rdy),
     .RST(1'b0),
     .D(DB),
     .Q(AHL) );
@@ -105,7 +106,7 @@ add8_3 #(.INIT(64'h5aaa66cc_a0008800)) abl_add(
  */ 
 reg8 abl( 
     .clk(clk),
-    .EN(1'b1),
+    .EN(rdy),
     .RST(1'b0),
     .D(ADL),
     .Q(ABL) );
@@ -130,7 +131,7 @@ inc8 pcl_inc(
  */
 reg8 pcl( 
     .clk(clk),
-    .EN(ld_pc),
+    .EN(ld_pc & rdy),
     .RST(1'b0),
     .D(PCL1),
     .Q(PCL) );

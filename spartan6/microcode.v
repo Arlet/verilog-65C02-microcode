@@ -1,5 +1,6 @@
 module microcode(
     input clk,
+    input enable,
     input [8:0] addr,
     output [31:0] data );
 
@@ -12,7 +13,7 @@ RAMB16BWER #(.DATA_WIDTH_A(36)) rom(
     .CLKA(clk),
     .DIA(32'b0),
     .DIPA(4'b0),
-    .ENA(1'b1),
+    .ENA(enable),
     .RSTA(1'b0),
     .WEA(1'b0),
     .ADDRA(addr),

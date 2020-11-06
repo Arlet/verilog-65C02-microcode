@@ -38,6 +38,7 @@
 module ctl(
     input clk,
     input irq,
+    input rdy,
     input nmi,
     input reset,
     output sync,
@@ -75,6 +76,7 @@ wire [4:0] finish_d;   // finishing code
 
 microcode rom(
     .clk(clk),
+    .enable(rdy),
     .addr(pc),
     .data(control) );
 
@@ -160,7 +162,7 @@ always @(posedge clk)
     WE <= control[28];
 */
 
-FDRE ff_we( .C(clk), .CE(1'b1), .R(1'b0), .D(control[28]), .Q(WE) );
+FDRE ff_we( .C(clk), .CE(rdy), .R(1'b0), .D(control[28]), .Q(WE) );
 
 /*
  * if bit 23 is set, the ALU is not needed in this cycle
@@ -178,11 +180,11 @@ LUT5 #(.INIT(32'hf0f0aaaa)) fin2( .O(finish_d[2]), .I0(finish_q[2]), .I1(finish_
 LUT5 #(.INIT(32'hff00cccc)) fin3( .O(finish_d[3]), .I0(finish_q[2]), .I1(finish_q[3]), .I2(control[12]), .I3(control[13]), .I4(control[23]) );
 LUT5 #(.INIT(32'hf0f0aaaa)) fin4( .O(finish_d[4]), .I0(finish_q[4]), .I1(finish_q[4]), .I2(control[14]), .I3(control[14]), .I4(control[23]) );
 
-FDRE ff_fin0( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[0]), .Q(finish_q[0]) );
-FDRE ff_fin1( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[1]), .Q(finish_q[1]) );
-FDRE ff_fin2( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[2]), .Q(finish_q[2]) );
-FDRE ff_fin3( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[3]), .Q(finish_q[3]) );
-FDRE ff_fin4( .C(clk), .CE(1'b1), .R(1'b0), .D(finish_d[4]), .Q(finish_q[4]) );
+FDRE ff_fin0( .C(clk), .CE(rdy), .R(1'b0), .D(finish_d[0]), .Q(finish_q[0]) );
+FDRE ff_fin1( .C(clk), .CE(rdy), .R(1'b0), .D(finish_d[1]), .Q(finish_q[1]) );
+FDRE ff_fin2( .C(clk), .CE(rdy), .R(1'b0), .D(finish_d[2]), .Q(finish_q[2]) );
+FDRE ff_fin3( .C(clk), .CE(rdy), .R(1'b0), .D(finish_d[3]), .Q(finish_q[3]) );
+FDRE ff_fin4( .C(clk), .CE(rdy), .R(1'b0), .D(finish_d[4]), .Q(finish_q[4]) );
 
 /*
  * In order to compress those in the control word, the code below expands

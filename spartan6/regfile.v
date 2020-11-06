@@ -5,6 +5,7 @@
  */
 module regfile(
     input clk,
+    input rdy,
     input [6:0] op,
     input [7:0] DI,
     output [7:0] DO );
@@ -42,7 +43,7 @@ reg [7:0] regs[15:0];                   // register file
 
 wire [4:0] reg_wr = {3'b000, op[5:4]};    // register file select
 wire [4:0] reg_rd = {1'b0,   op[3:0]};    // register file select
-wire we = op[6];
+wire we = op[6] & rdy;
 
 /*
  * lower nibble of register file

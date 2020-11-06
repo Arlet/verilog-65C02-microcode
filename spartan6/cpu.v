@@ -78,6 +78,7 @@ wire [7:0] R;
  */
 regfile regfile(
     .clk(clk),
+    .rdy(RDY),
     .op(reg_op),
     .DI(alu_out),
     .DO(R) );
@@ -87,6 +88,7 @@ regfile regfile(
  */
 abl abl(
     .clk(clk),
+    .rdy(RDY),
     .CI(abl_ci),
     .CO(abl_co),
     .cond(cond),
@@ -106,6 +108,7 @@ abl abl(
  */
 abh abh(
     .clk(clk),
+    .rdy(RDY),
     .CI(abh_ci),
     .op(abh_op) ,
     .ld_pc(ld_pc),
@@ -132,7 +135,8 @@ always @(*)
  */
 alu alu(
     .clk(clk),
-    .sync(sync),
+    .rdy(RDY),
+    .sync(sync & RDY),
     .DB(DB),
     .R(R),
     .B(B),
@@ -152,6 +156,7 @@ alu alu(
 ctl ctl( 
     .clk(clk),
     .irq(IRQ),
+    .rdy(RDY),
     .nmi(NMI),
     .reset(RST),
     .cond(cond),
@@ -276,6 +281,7 @@ wire [7:0] V_ = alu.V ? "V" : "-";
 wire [7:0] Z_ = alu.Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
 wire [7:0] Q_ = IRQ ? "I" : "-";
+wire [7:0] W_ = RDY ? "-" : "W";
 
 integer cycle;
 integer hang;
@@ -303,10 +309,9 @@ always @(*)
 
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
-      //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H %b F:%h N:%h LD:%b OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, R_, Q_, ctl.control[21:20], ctl.pc, ctl.sel_pc, ctl.F, ctl.N,
-       ld_m, ctl.ab, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
+      $display( "%4d %s%s%s %b.%3H LD:%b OP:%b AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, W_, R_, Q_, ctl.control[21:20], ctl.pc,  
+       ld_m, ctl.ab, AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );

@@ -5,6 +5,7 @@
  */
 module abh( 
     input clk,
+    input rdy,
     input CI,               // carry input from ABL module
     input [7:0] DB,         // Data Bus
     input [3:0] op,         // operation
@@ -63,7 +64,7 @@ add8_2b #(.INIT0(64'h965a_965a_28a0_28a0),
  */ 
 reg8 abh( 
     .clk(clk),
-    .EN(1'b1),
+    .EN(rdy),
     .RST(1'b0),
     .D(ADH),
     .Q(ABH) );
@@ -85,7 +86,7 @@ inc8 pch_inc(
  */
 reg8 pch( 
     .clk(clk),
-    .EN(ld_pc),
+    .EN(ld_pc & rdy),
     .RST(1'b0),
     .D(PCH1),
     .Q(PCH) );

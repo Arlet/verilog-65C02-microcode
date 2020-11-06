@@ -13,6 +13,7 @@
 
 module alu( 
     input clk,              // clk
+    input rdy,              // RDY input
     input sync,             // opcode sync
     input [7:0] R,          // input from register file
     input [7:0] DB,         // data bus
@@ -182,7 +183,7 @@ LUT6 #(.INIT(64'he444eeee_eeeee444)) bi6( .O(BI6), .I0(adj_m), .I1(DB[6]), .I2(a
 
 reg8 bi_reg( 
     .clk(clk),
-    .EN(ld_m),
+    .EN(ld_m & rdy),
     .RST(1'b0),
     .D({BI7, BI6, BI5, BI4, BI3, BI2, BI1, BI0}),
     .Q(BI) );
@@ -194,7 +195,7 @@ reg8 bi_reg(
 
 reg8 m_reg( 
     .clk(clk),
-    .EN(ld_m),
+    .EN(ld_m & rdy),
     .RST(1'b0),
     .D(DB),
     .Q(M) );
@@ -211,13 +212,13 @@ reg8 m_reg(
  */
 wire CO1; 
 
-FDRE co1( .C(clk), .CE(1'b1), .R(1'b0), .D(CO), .Q(CO1) );
+FDRE co1( .C(clk), .CE(rdy), .R(1'b0), .D(CO), .Q(CO1) );
 
 wire c_flag;
 
 LUT6 #(.INIT(64'hccfcf0aaaaaaaaaa)) cflag( .O(c_flag), .I0(C), .I1(CO), .I2(CO1), .I3(flag_op[0]), .I4(flag_op[1]), .I5(sync) );
 
-FDRE c( .C(clk), .CE(1'b1), .R(1'b0), .D(c_flag), .Q(C) );
+FDRE c( .C(clk), .CE(rdy), .R(1'b0), .D(c_flag), .Q(C) );
 
 /*
 always @(posedge clk)
