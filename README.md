@@ -34,10 +34,10 @@ Code has been tested with Verilator.
 
 ## Status
 
-* All CMOS/NMOS 6502 instructions added.
+* All CMOS/NMOS 6502 instructions added (except for NOPs as undefined, Rockwell/WDC extensions)
 * Model passes Klaus Dormann's test suite for 6502/65C02 (with BCD disabled)
 * RST, IRQ, RDY implemented.
-* NMI/RDY not yet implemented.
+* NMI not yet implemented.
 * BCD support implemented using additional cycle. C/Z flags updated, N/V flags are unaffected.
 
 ### Cycle counts
