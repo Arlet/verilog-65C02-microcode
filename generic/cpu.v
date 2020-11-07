@@ -241,12 +241,19 @@ always @(posedge clk)
             2'b11 : N <= alu_out[7];   // ALU N flag 
         endcase
 
+reg z_tsb_trb;
+
+always @(posedge clk)
+    z_tsb_trb <= ~|(R & M);
+
 /*
  * update Z(ero) flag
  */
 always @(posedge clk)
     if( sync )
-        casez( flags[4:3] )
+        if( flags[9] )
+            $display( "flag Z %b", z_tsb_trb );
+        else casez( flags[4:3] )
             2'b01 : Z <= ~|(R & M);    // BIT  
             2'b10 : Z <= M[1];         // PLP
             2'b11 : Z <= ~|alu_out;    // ALU == 0 
@@ -400,6 +407,8 @@ always @*
             8'b1111_1000: opcode = "SED";
             8'b111?_?110: opcode = "INC";
             8'b1101_1011: opcode = "STP";
+            8'b0000_?100: opcode = "TSB";
+            8'b0001_?100: opcode = "TRB";
 
             default:      opcode = "___";
     endcase

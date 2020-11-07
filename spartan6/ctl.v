@@ -81,6 +81,7 @@ wire [4:0] finish_d;   // finishing code
 microcode rom(
     .clk(clk),
     .enable(rdy),
+    .reset(reset),
     .addr(pc),
     .data(control) );
 
@@ -110,54 +111,49 @@ LUT2 #(.INIT(4'b0010)) lut_take_irq( .O(take_irq), .I0(irq), .I1(I) );
 /* 
  * 9 bit address in microcode ROM (the 'pc')
  *
- *    8   7   6   5   4   3   2   1   0
- *  +---+---+---+---+---+---+---+---+---+
- *  | 0 |           opcode (DB)         |   opcode lookup
- *  +---+---+---+---+---+---+---+---+---+
- *  | 1 | 0   1   1   0   0   0   0   0 |   RST handler
- *  +---+---+---+---+---+---+---+---+---+
- *  | 1 | 0   1   1   0   1   0   0   0 |   IRQ handler
- *  +---+---+---+---+---+---+---+---+---+
- *  | 1 | 0   1   1   1   0   0   0   0 |   NMI handler
- *  +---+---+---+---+---+---+---+---+---+
- *  | 1 | D |        jmp next           |   next instruction 
- *  +---+---+---+---+---+---+---+---+---+
- *  | 1 | D | 1   0 |      finish       |   finish handler 
- *  +---+---+---+---+---+---+---+---+---+
+ * sel   8   7   6   5   4   3   2   1   0
+ *     +---+---+---+---+---+---+---+---+---+
+ * 00: | 0 |           opcode (DB)         |   opcode lookup
+ *     +---+---+---+---+---+---+---+---+---+
+ * 01: | 1 | D |        jmp next           |   next instruction 
+ *     +---+---+---+---+---+---+---+---+---+
+ * 10: | 1 | D | 1   0 |      finish       |   finish handler 
+ *     +---+---+---+---+---+---+---+---+---+
+ * 11: | 1 |N/I| 1   1   0   0   0   0   0 |   IRQ/NMI handler @160
+ *     +---+---+---+---+---+---+---+---+---+
  *
  */
 
-wire [2:0] sel_pc;
+wire [1:0] sel_pc;
 
 /*
- * sel_pc:
- *
- * 000 fetch
- * 001 next
- * 010 finish
- * 100 IRQ
- * 101 NMI
- * 110 RST
+ * 00 fetch
+ * 01 next
+ * 10 finish
+ * 11 IRQ/NMI
  */
 
-// encode next action in 3 bits
-
-LUT5 #(.INIT(32'hffff1110)) sel_pc2( .O(sel_pc[2]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
-LUT5 #(.INIT(32'hffff4444)) sel_pc1( .O(sel_pc[1]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
-LUT5 #(.INIT(32'h0000bbaa)) sel_pc0( .O(sel_pc[0]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi), .I4(reset) );
+/*
+ * address select for microcode ROM
+ */
+LUT4 #(.INIT(16'h5554)) lut_sel1( .O(sel_pc[1]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi) );
+LUT4 #(.INIT(16'hbbba)) lut_sel0( .O(sel_pc[0]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi) );
 
 wire [6:0] N = control[6:0];
 wire [4:0] F = finish_q;
 
-LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc8( .O(pc[8]), .I0(1'b0),  .I1(1'b1), .I2(1'b1), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc7( .O(pc[7]), .I0(DB[7]), .I1(D),    .I2(D),    .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc6( .O(pc[6]), .I0(DB[6]), .I1(N[6]), .I2(1'b1), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00ffffff_00f0ccaa)) pc5( .O(pc[5]), .I0(DB[5]), .I1(N[5]), .I2(1'b0), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h0000ff00_00f0ccaa)) pc4( .O(pc[4]), .I0(DB[4]), .I1(N[4]), .I2(F[4]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h000000ff_00f0ccaa)) pc3( .O(pc[3]), .I0(DB[3]), .I1(N[3]), .I2(F[3]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc2( .O(pc[2]), .I0(DB[2]), .I1(N[2]), .I2(F[2]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc1( .O(pc[1]), .I0(DB[1]), .I1(N[1]), .I2(F[1]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
-LUT6 #(.INIT(64'h00000000_00f0ccaa)) pc0( .O(pc[0]), .I0(DB[0]), .I1(N[0]), .I2(F[0]), .I3(sel_pc[0]), .I4(sel_pc[1]), .I5(sel_pc[2]));
+/*
+ * address mux
+ */
+LUT2 #(.INIT(4'b1110))      pc8( .O(pc[8]),                                   .I0(sel_pc[0]), .I1(sel_pc[1]) );
+LUT5 #(.INIT(32'hf0ccccaa)) pc7( .O(pc[7]), .I0(DB[7]), .I1(D),    .I2(nmi),  .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT4 #(.INIT(16'hffca))     pc6( .O(pc[6]), .I0(DB[6]), .I1(N[6]),            .I2(sel_pc[0]), .I3(sel_pc[1]) );
+LUT4 #(.INIT(16'hf0ca))     pc5( .O(pc[5]), .I0(DB[5]), .I1(N[5]),            .I2(sel_pc[0]), .I3(sel_pc[1]) );
+LUT5 #(.INIT(32'h00f0ccaa)) pc4( .O(pc[4]), .I0(DB[4]), .I1(N[4]), .I2(F[4]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT5 #(.INIT(32'h00f0ccaa)) pc3( .O(pc[3]), .I0(DB[3]), .I1(N[3]), .I2(F[3]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT5 #(.INIT(32'h00f0ccaa)) pc2( .O(pc[2]), .I0(DB[2]), .I1(N[2]), .I2(F[2]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT5 #(.INIT(32'h00f0ccaa)) pc1( .O(pc[1]), .I0(DB[1]), .I1(N[1]), .I2(F[1]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT5 #(.INIT(32'h00f0ccaa)) pc0( .O(pc[0]), .I0(DB[0]), .I1(N[0]), .I2(F[0]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
 
 /*
  * bit 28 contains WE signal for next cycle
