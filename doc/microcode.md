@@ -1,3 +1,10 @@
+# File automatically generated from microcode.hex
+note that '<=' operator means that the results are stored at the end of the clock cycle, so they are
+valid on the next row. The '=' operator works immediately.
+the 'mod' column refers to the address mode. It is a 4 bit number, and encodes the AB, AH and PC columns
+This means that you sometimes see useless loads in PC and AH.
+
+If there is a register calculation in the bottom right corner without a destination register, it means
 ### 00 : BRK
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
