@@ -222,7 +222,7 @@ Flags update: N Z
 
 Flags update: C N Z
 
-### 20 : 
+### 20 : JSR
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
@@ -233,7 +233,7 @@ Flags update: C N Z
 
 Flags update:
 
-### 21 : 
+### 21 : AND (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -244,7 +244,7 @@ Flags update:
 
 Flags update: N Z
 
-### 24 : 
+### 24 : BIT ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -253,7 +253,7 @@ Flags update: N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 25 : 
+### 25 : AND ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -262,7 +262,7 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 26 : 
+### 26 : ROL ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -272,7 +272,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 28 : 
+### 28 : PLP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
@@ -281,7 +281,7 @@ Flags update: N Z
 
 Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
 
-### 29 : 
+### 29 : AND #IMM
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -289,14 +289,14 @@ Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
 
 Flags update: N Z
 
-### 2A : 
+### 2A : ROL A
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ROL A  |
 
 Flags update: C N Z
 
-### 2C : 
+### 2C : BIT ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -306,7 +306,7 @@ Flags update: C N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 2D : 
+### 2D : AND A
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -316,7 +316,7 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 2E : 
+### 2E : ROL ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -327,7 +327,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 30 : 
+### 30 : BMI
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 7 | AB<=COND      |        |          |          | M<=DB |          |
@@ -335,7 +335,7 @@ Flags update: N Z
 
 Flags update:
 
-### 31 : 
+### 31 : AND (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -346,7 +346,7 @@ Flags update:
 
 Flags update: N Z
 
-### 32 : 
+### 32 : AND (ZP)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -357,7 +357,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 34 : 
+### 34 : BIT ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -366,7 +366,7 @@ Flags update: N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 35 : 
+### 35 : AND ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -375,7 +375,7 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 36 : 
+### 36 : ROL ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -385,14 +385,14 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 38 : 
+### 38 : SEC
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    0-1   |
 
 Flags update: C
 
-### 39 : 
+### 39 : AND ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -402,14 +402,14 @@ Flags update: C
 
 Flags update: N Z
 
-### 3A : 
+### 3A : DEC A
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-1   |
 
 Flags update: N Z
 
-### 3C : 
+### 3C : BIT ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -419,7 +419,7 @@ Flags update: N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 3D : 
+### 3D : AND ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -429,7 +429,7 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 3E : 
+### 3E : ROL ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -440,7 +440,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 40 : 
+### 40 : RTI
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
@@ -451,7 +451,7 @@ Flags update: N Z
 
 Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
 
-### 41 : 
+### 41 : EOR (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -462,7 +462,7 @@ Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
 
 Flags update: N Z
 
-### 45 : 
+### 45 : EOR ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -471,7 +471,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 46 : 
+### 46 : LSR ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -481,7 +481,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 48 : 
+### 48 : PHA
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
@@ -490,7 +490,7 @@ Flags update: N Z
 
 Flags update:
 
-### 49 : 
+### 49 : EOR #IMM
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -498,14 +498,14 @@ Flags update:
 
 Flags update: N Z
 
-### 4A : 
+### 4A : LSR A
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=LSR A |
 
 Flags update: C N Z
 
-### 4C : 
+### 4C : JMP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -514,7 +514,7 @@ Flags update: C N Z
 
 Flags update:
 
-### 4D : 
+### 4D : EOR ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -524,7 +524,7 @@ Flags update:
 
 Flags update: N Z
 
-### 4E : 
+### 4E : LSR ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -535,7 +535,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 50 : 
+### 50 : BVC
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 7 | AB<=COND      |        |          |          | M<=DB |          |
@@ -543,7 +543,7 @@ Flags update: N Z
 
 Flags update:
 
-### 51 : 
+### 51 : EOR (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -554,7 +554,7 @@ Flags update:
 
 Flags update: N Z
 
-### 52 : 
+### 52 : EOR (ZP)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -565,7 +565,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 55 : 
+### 55 : EOR ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -574,7 +574,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 56 : 
+### 56 : LSR ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -584,7 +584,7 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 58 : 
+### 58 : EOR ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -601,7 +601,7 @@ Flags update: I<=M5
 
 Flags update: N Z
 
-### 5A : 
+### 5A : PHY
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
@@ -610,7 +610,7 @@ Flags update: N Z
 
 Flags update:
 
-### 5D : 
+### 5D : EOR ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -620,7 +620,7 @@ Flags update:
 
 Flags update: N Z
 
-### 5E : 
+### 5E : LSR ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
