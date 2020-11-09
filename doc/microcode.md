@@ -5,7 +5,10 @@ the 'mod' column refers to the address mode. It is a 4 bit number, and encodes t
 This means that you sometimes see useless loads in PC and AH.
 
 If there is a register calculation in the bottom right corner without a destination register, it means
-### 00 : BRK
+that the results are only calculated to set the flags.
+
+If flags are modified, the default source is the ALU. If not, then it is mentioned explicitly.
+If the source of a flag is 'M<n>' this can be a bit from the instruction, or a bit loaded from memory### 00 : BRK
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
