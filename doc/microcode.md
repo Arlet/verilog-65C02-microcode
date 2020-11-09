@@ -8,7 +8,9 @@ If there is a register calculation in the bottom right corner without a destinat
 that the results are only calculated to set the flags.
 
 If flags are modified, the default source is the ALU. If not, then it is mentioned explicitly.
-If the source of a flag is 'M<n>' this can be a bit from the instruction, or a bit loaded from memory### 00 : BRK
+If the source of a flag is 'M<n>' this can be a bit from the instruction, or a bit loaded from memory
+
+### 00 : BRK
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
