@@ -18,7 +18,7 @@ Flags update: I<=1 D<=0
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -27,7 +27,7 @@ Flags update: N Z
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A|M   |       |          |
+| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
 Flags update: Z
@@ -37,7 +37,7 @@ Flags update: Z
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -64,7 +64,7 @@ Flags update:
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -81,7 +81,7 @@ Flags update: C N Z
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A|M   |       |          |
+| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
 Flags update: Z
@@ -92,7 +92,7 @@ Flags update: Z
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -122,7 +122,7 @@ Flags update:
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -133,7 +133,7 @@ Flags update: N Z
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -152,7 +152,7 @@ Flags update: Z
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -179,7 +179,7 @@ Flags update: C
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
@@ -207,7 +207,7 @@ Flags update: Z
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
 
 Flags update: N Z
 
