@@ -202,8 +202,8 @@ wire [3:0] abh_sel;
 
 // all same inputs for packing 
 LUT5 #(.INIT(32'h020c0000)) inc_pc_dec( .O(inc_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
-LUT5 #(.INIT(32'h0afc0000)) ld_pc_dec( .O(ld_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
-LUT5 #(.INIT(32'h76fd0000)) ld_ahl_dec( .O(ld_ahl), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h0aec0000)) ld_pc_dec( .O(ld_pc), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
+LUT5 #(.INIT(32'h12300000)) ld_ahl_dec( .O(ld_ahl), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
 LUT5 #(.INIT(32'h70d30000)) abl_op1( .O(abl_op[1]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
 LUT5 #(.INIT(32'h74dd0000)) abl_op0( .O(abl_op[0]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
 LUT5 #(.INIT(32'h04060000)) abh_sel3( .O(abh_sel[3]), .I0(ab[0]), .I1(ab[1]), .I2(ab[2]), .I3(ab[3]), .I4(rdy) );
