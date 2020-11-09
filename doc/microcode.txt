@@ -1,4 +1,3 @@
-mc < microcode.hex 
 00: [9] AB<={01,S}      AH<=DB  PC<=AB+1  |             M<=DB   S<=S-1
     [8] AB<={01,S}                        | DO=PCH      M<=DB   S<=S-1
     [8] AB<={01,S}                        | DO=PCL      M<=DB   S<=S-1
