@@ -10,260 +10,102 @@ that the results are only calculated to set the flags.
 If flags are modified, the default source is the ALU. If not, then it is mentioned explicitly.
 If the source of a flag is 'M<n>' this can be a bit from the instruction, or a bit loaded from memory
 
-### 00 : BRK
+### 69 : ADC #IMM
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
-| 8 | AB<={01,S}    |        |          | DO=PCH   | M<=DB | S<=S-1   |
-| 8 | AB<={01,S}    |        |          | DO=PCL   | M<=DB | S<=S-1   |
-| f | AB<=BRK       |        |          | DO=P     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 65 : ADC ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 75 : ADC ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 6D : ADC ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 7D : ADC ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
 
-Flags update: I<=1 D<=0
+Flags update: C N Z V
 
-### 01 : ORA (ZP,X)
+### 79 : ADC ABS,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 72 : ADC (ZP)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+
+Flags update: C N Z V
+
+### 61 : ADC (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
 
-Flags update: N Z
+Flags update: C N Z V
 
-### 04 : TSB ZP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: Z
-
-### 05 : ORA ZP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 06 : ASL ZP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
-
-Flags update: C N Z
-
-### 08 : PHP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
-| 1 | AB<=PC        |        |          | DO=P     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 09 : ORA #IMM
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 0A : ASL A
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ASL A |
-
-Flags update: C N Z
-
-### 0C : TSB ABS
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: Z
-
-### 0D : ORA ABS
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 0E : ASL ABS
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
-
-Flags update: C N Z
-
-### 10 : BPL
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 11 : ORA (ZP),Y
+### 71 : ADC (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
 
-Flags update: N Z
+Flags update: C N Z V
 
-### 12 : ORA (ZP)
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 14 : TRB ZP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=~A&M  |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: Z
-
-### 15 : ORA (ZP,X)
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 16 : ASL ZP,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
-
-Flags update: C N Z
-
-### 18 : CLC
+### 29 : AND #IMM
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update: C
-
-### 19 : ORA ABS,Y
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 1A : INC A
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+1   |
-
-Flags update: N Z
-
-### 1C : TRB ABS
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=~A&M  |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: Z
-
-### 1D : ORA ABS,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
-
-Flags update: N Z
-
-### 1E : ASL ABS,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
-
-Flags update: C N Z
-
-### 20 : JSR
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
-| 8 | AB<={01,S}    |        |          | DO=PCH   | M<=DB | S<=S-1   |
-| 1 | AB<=PC        |        |          | DO=PCL   | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 21 : AND (ZP,X)
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
 
 Flags update: N Z
-
-### 24 : BIT ZP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: N<=M7 Z V<=M6
 
 ### 25 : AND ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
@@ -274,51 +116,16 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 26 : ROL ZP
+### 35 : AND ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
-
-Flags update: C N Z
-
-### 28 : PLP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
-
-Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
-
-### 29 : AND #IMM
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
 
 Flags update: N Z
 
-### 2A : ROL A
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ROL A  |
-
-Flags update: C N Z
-
-### 2C : BIT ABS
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: N<=M7 Z V<=M6
-
-### 2D : AND A
+### 2D : AND ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -328,31 +135,21 @@ Flags update: N<=M7 Z V<=M6
 
 Flags update: N Z
 
-### 2E : ROL ABS
+### 3D : AND ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
 
-Flags update: C N Z
+Flags update: N Z
 
-### 30 : BMI
+### 39 : AND ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 31 : AND (ZP),Y
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
 
@@ -369,6 +166,118 @@ Flags update: N Z
 
 Flags update: N Z
 
+### 21 : AND (ZP,X)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
+
+Flags update: N Z
+
+### 31 : AND (ZP),Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
+
+Flags update: N Z
+
+### 0A : ASL A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ASL A |
+
+Flags update: C N Z
+
+### 06 : ASL ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
+
+Flags update: C N Z
+
+### 16 : ASL ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
+
+Flags update: C N Z
+
+### 0E : ASL ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
+
+Flags update: C N Z
+
+### 1E : ASL ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ASL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ASL M |
+
+Flags update: C N Z
+
+### 90 : BCC
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### B0 : BCS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### F0 : BEQ
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 89 : BIT #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
+
+Flags update: Z
+
+### 24 : BIT ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
+
+Flags update: N<=M7 Z V<=M6
+
 ### 34 : BIT ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
@@ -378,48 +287,15 @@ Flags update: N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 35 : AND ZP,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
-
-Flags update: N Z
-
-### 36 : ROL ZP,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
-
-Flags update: C N Z
-
-### 38 : SEC
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    0-1   |
-
-Flags update: C
-
-### 39 : AND ABS,Y
+### 2C : BIT ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
-Flags update: N Z
-
-### 3A : DEC A
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-1   |
-
-Flags update: N Z
+Flags update: N<=M7 Z V<=M6
 
 ### 3C : BIT ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
@@ -431,45 +307,305 @@ Flags update: N Z
 
 Flags update: N<=M7 Z V<=M6
 
-### 3D : AND ABS,X
+### 30 : BMI
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### D0 : BNE
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 10 : BPL
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 80 : BRA
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 00 : BRK
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
+| 8 | AB<={01,S}    |        |          | DO=PCH   | M<=DB | S<=S-1   |
+| 8 | AB<={01,S}    |        |          | DO=PCL   | M<=DB | S<=S-1   |
+| f | AB<=BRK       |        |          | DO=P     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update: I<=1 D<=0
+
+### 50 : BVC
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 70 : BVS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 18 : CLC
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update: C
+
+### D8 : CLD
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update: D<=M5
+
+### 58 : CLI
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update: I<=M5
+
+### B8 : CLV
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M   |
+
+Flags update: V
+
+### C9 : CMP #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### C5 : CMP ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### D5 : CMP ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### CD : CMP ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### DD : CMP ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A&M   |
-
-Flags update: N Z
-
-### 3E : ROL ABS,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
 
 Flags update: C N Z
 
-### 40 : RTI
+### D9 : CMP ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          |       | S<=S+1   |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
 
-Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
+Flags update: C N Z
 
-### 41 : EOR (ZP,X)
+### D2 : CMP (ZP)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### C1 : CMP (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### D1 : CMP (ZP), Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
+
+Flags update: C N Z
+
+### E0 : CPX #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
+
+Flags update: C N Z
+
+### E4 : CPX ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
+
+Flags update: C N Z
+
+### EC : CPX ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
+
+Flags update: C N Z
+
+### C0 : CPY #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
+
+Flags update: C N Z
+
+### C4 : CPY ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
+
+Flags update: C N Z
+
+### CC : CPY ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
+
+Flags update: C N Z
+
+### 3A : DEC A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-1   |
+
+Flags update: N Z
+
+### C6 : DEC ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
+
+Flags update: N Z
+
+### D6 : DEC ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
+
+Flags update: N Z
+
+### CE : DEC ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
+
+Flags update: N Z
+
+### DE : DEC ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
+
+Flags update: N Z
+
+### CA : DEX
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=X-1   |
+
+Flags update: N Z
+
+### 88 : DEY
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=Y-1   |
+
+Flags update: N Z
+
+### 49 : EOR #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
 
 Flags update: N Z
@@ -483,48 +619,14 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 46 : LSR ZP
+### 55 : EOR ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=LSR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
-
-Flags update: C N Z
-
-### 48 : PHA
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 49 : EOR #IMM
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
 
 Flags update: N Z
-
-### 4A : LSR A
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=LSR A |
-
-Flags update: C N Z
-
-### 4C : JMP
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
 
 ### 4D : EOR ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
@@ -536,31 +638,21 @@ Flags update:
 
 Flags update: N Z
 
-### 4E : LSR ABS
+### 5D : EOR ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=LSR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
 
-Flags update: C N Z
+Flags update: N Z
 
-### 50 : BVC
+### 59 : EOR ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 51 : EOR (ZP),Y
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
 
@@ -577,14 +669,330 @@ Flags update: N Z
 
 Flags update: N Z
 
-### 55 : EOR ZP,X
+### 41 : EOR (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
 
 Flags update: N Z
+
+### 51 : EOR (ZP),Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
+
+Flags update: N Z
+
+### 1A : INC A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+1   |
+
+Flags update: N Z
+
+### E6 : INC ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
+
+Flags update: N Z
+
+### F6 : INC ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
+
+Flags update: N Z
+
+### EE : INC ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
+
+Flags update: N Z
+
+### FE : INC ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
+
+Flags update: N Z
+
+### E8 : INX
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=X+1   |
+
+Flags update: N Z
+
+### C8 : INY
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=Y+1   |
+
+Flags update: N Z
+
+### 4C : JMP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 6C : JMP (IND)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 7C : JMP (IND,X)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 20 : JSR
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 9 | AB<={01,S}    | AH<=DB | PC<=AB+1 |          | M<=DB | S<=S-1   |
+| 8 | AB<={01,S}    |        |          | DO=PCH   | M<=DB | S<=S-1   |
+| 1 | AB<=PC        |        |          | DO=PCL   | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### A9 : LDA #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### A5 : LDA ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### B5 : LDA ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### AD : LDA ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### BD : LDA ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### B9 : LDA ABS,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### B2 : LDA (ZP)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### A1 : LDA (ZP,X)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### B1 : LDA (ZP),Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### A2 : LDX #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### A6 : LDX ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### B6 : LDX ZP,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### AE : LDX ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### BE : LDX ABS,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### A0 : LDY #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### A4 : LDY ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### B4 : LDY ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### AC : LDY ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### BC : LDY ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### 4A : LSR A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=LSR A |
+
+Flags update: C N Z
+
+### 46 : LSR ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=LSR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
+
+Flags update: C N Z
 
 ### 56 : LSR ZP,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
@@ -596,41 +1004,16 @@ Flags update: N Z
 
 Flags update: C N Z
 
-### 58 : CLI
+### 4E : LSR ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=LSR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
 
-Flags update: I<=M5
-
-### 59 : EOR ABS,Y
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
-
-Flags update: N Z
-
-### 5A : PHY
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
-| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 5D : EOR ABS,X
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A^M   |
-
-Flags update: N Z
+Flags update: C N Z
 
 ### 5E : LSR ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
@@ -643,7 +1026,284 @@ Flags update: N Z
 
 Flags update: C N Z
 
-### 60 : 
+### EA : NOP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 09 : ORA #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 05 : ORA ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 15 : ORA ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 0D : ORA ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 1D : ORA ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 19 : ORA ABS,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 12 : ORA (ZP)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 01 : ORA (ZP,X)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 11 : ORA (ZP),Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A\|M   |
+
+Flags update: N Z
+
+### 48 : PHA
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 08 : PHP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
+| 1 | AB<=PC        |        |          | DO=P     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### DA : PHX
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
+| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 5A : PHY
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
+| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 68 : PLA
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+
+Flags update: N Z
+
+### 28 : PLP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
+
+Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
+
+### FA : PLX
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
+
+Flags update: N Z
+
+### 7A : PLY
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+
+Flags update: N Z
+
+### 2A : ROL A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ROL A  |
+
+Flags update: C N Z
+
+### 26 : ROL ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+
+Flags update: C N Z
+
+### 36 : ROL ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+
+Flags update: C N Z
+
+### 2E : ROL ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+
+Flags update: C N Z
+
+### 3E : ROL ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROL M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROL M |
+
+Flags update: C N Z
+
+### 6A : ROR A
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ROR A  |
+
+Flags update: C N Z
+
+### 66 : ROR ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
+
+Flags update: C N Z
+
+### 76 : ROR ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
+
+Flags update: C N Z
+
+### 6E : ROR ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
+
+Flags update: C N Z
+
+### 7E : ROR ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
+
+Flags update: C N Z
+
+### 40 : RTI
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
+| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          |       | S<=S+1   |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    LSR M |
+
+Flags update: C N<=M7 Z<=M1 V<=M6 I<=M2 D<=M3
+
+### 60 : RTS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
@@ -653,226 +1313,176 @@ Flags update: C N Z
 
 Flags update:
 
-### 61 : 
+### E9 : SBC #IMM
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### E5 : SBC ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### F5 : SBC ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### ED : SBC ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### FD : SBC ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### F9 : SBC ABS,Y
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### F2 : SBC (ZP)
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
+
+Flags update: C N Z V
+
+### E1 : SBC (ZP,X)
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
 
 Flags update: C N Z V
 
-### 64 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=0     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 65 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 66 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
-
-Flags update: C N Z
-
-### 68 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### 69 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 6A : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=ROR A  |
-
-Flags update: C N Z
-
-### 6C : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 6D : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 6E : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
-
-Flags update: C N Z
-
-### 70 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 71 : 
+### F1 : SBC (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
 | 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
 
 Flags update: C N Z V
 
-### 72 : 
+### 38 : SEC
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    0-1   |
 
-Flags update: C N Z V
+Flags update: C
 
-### 74 : 
+### F8 : SED
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=0     | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
-Flags update:
+Flags update: D<=M5
 
-### 75 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 76 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
-
-Flags update: C N Z
-
-### 78 : 
+### 78 : SEI
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update: I<=M5
 
-### 79 : 
+### 85 : STA ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 95 : STA ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 8D : STA ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 9D : STA ABS,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 99 : STA ABS,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 7A : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
-
-Flags update: N Z
-
-### 7C : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update:
 
-### 7D : 
+### 92 : STA (ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A+M   |
-
-Flags update: C N Z V
-
-### 7E : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=ROR M |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    ROR M |
-
-Flags update: C N Z
-
-### 80 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
+| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update:
 
-### 81 : 
+### 81 : STA (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
@@ -883,94 +1493,7 @@ Flags update:
 
 Flags update:
 
-### 84 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 85 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 86 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 88 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=Y-1   |
-
-Flags update: N Z
-
-### 89 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
-
-Flags update: Z
-
-### 8A : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=X     |
-
-Flags update: N Z
-
-### 8C : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 8D : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 8E : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 90 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 91 : 
+### 91 : STA (ZP),Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
@@ -981,36 +1504,16 @@ Flags update:
 
 Flags update:
 
-### 92 : 
+### 86 : STX ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update:
 
-### 94 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 95 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 96 : 
+### 96 : STX ZP,Y
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+Y |        | PC<=AB+1 |          | M<=DB |          |
@@ -1019,31 +1522,63 @@ Flags update:
 
 Flags update:
 
-### 98 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=Y     |
-
-Flags update: N Z
-
-### 99 : 
+### 8E : STX ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update:
 
-### 9A : 
+### 84 : STY ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | S<=X     |
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 
 Flags update:
 
-### 9C : 
+### 94 : STY ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 8C : STY ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=Y     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 64 : STZ ZP
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=0     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 74 : STZ ZP,X
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=0     | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+
+Flags update:
+
+### 9C : STZ ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -1053,17 +1588,7 @@ Flags update:
 
 Flags update:
 
-### 9D : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=A     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### 9E : 
+### 9E : STZ ABS,X
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
@@ -1073,612 +1598,87 @@ Flags update:
 
 Flags update:
 
-### A0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
-
-Flags update: N Z
-
-### A1 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### A2 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### A4 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
-
-Flags update: N Z
-
-### A5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### A6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### A8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=A     |
-
-Flags update: N Z
-
-### A9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### AA : 
+### AA : TAX
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=A     |
 
 Flags update: N Z
 
-### AC : 
+### A8 : TAY
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=A     |
+
+Flags update: N Z
+
+### 1C : TRB ABS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
 | 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=~A&M  |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
-Flags update: N Z
+Flags update: Z
 
-### AD : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### AE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### B0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### B1 : 
+### 14 : TRB ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=~A&M  |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
+
+Flags update: Z
+
+### 0C : TSB ABS
+|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
+|---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
-Flags update: N Z
+Flags update: Z
 
-### B2 : 
+### 04 : TSB ZP
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
+| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
+| 1 | AB<=PC        |        |          | DO=A\|M   |       |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A&M   |
 
-Flags update: N Z
+Flags update: Z
 
-### B4 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
-
-Flags update: N Z
-
-### B5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### B6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### B8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M   |
-
-Flags update: V
-
-### B9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### BA : 
+### BA : TSX
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
 | 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=S     |
 
 Flags update: N Z
 
-### BC : 
+### 8A : TXA
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=M     |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=X     |
 
 Flags update: N Z
 
-### BD : 
+### 9A : TXS
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=M     |
-
-Flags update: N Z
-
-### BE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### C0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
-
-Flags update: C N Z
-
-### C1 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### C4 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
-
-Flags update: C N Z
-
-### C5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### C6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
-
-Flags update: N Z
-
-### C8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | Y<=Y+1   |
-
-Flags update: N Z
-
-### C9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### CA : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=X-1   |
-
-Flags update: N Z
-
-### CC : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    Y-M   |
-
-Flags update: C N Z
-
-### CD : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### CE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
-
-Flags update: N Z
-
-### D0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | S<=X     |
 
 Flags update:
 
-### D1 : 
+### 98 : TYA
 |mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
 |---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### D2 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### D5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### D6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
-
-Flags update: N Z
-
-### D8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update: D<=M5
-
-### D9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### DA : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| b | AB<={01,S}    |        |  PC<=AB  |          | M<=DB | S<=S-1   |
-| 1 | AB<=PC        |        |          | DO=X     | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### DD : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    A-M   |
-
-Flags update: C N Z
-
-### DE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=M-1   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    M-1   |
-
-Flags update: N Z
-
-### E0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
-
-Flags update: C N Z
-
-### E1 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### E4 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
-
-Flags update: C N Z
-
-### E5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### E6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
-
-Flags update: N Z
-
-### E8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=X+1   |
-
-Flags update: N Z
-
-### E9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### EA : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### EC : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    X-M   |
-
-Flags update: C N Z
-
-### ED : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### EE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
-
-Flags update: N Z
-
-### F0 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 7 | AB<=COND      |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update:
-
-### F1 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+Y |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### F2 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+0 |        | PC<=AB+1 |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| a | AB<={DB,AH}+0 |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### F5 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### F6 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 3 | AB<={00,DB}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
-
-Flags update: N Z
-
-### F8 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-
-Flags update: D<=M5
-
-### F9 : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+Y |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### FA : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 5 | AB<={01,S+1}  | AH<=DB |  PC<=AB  |          | M<=DB | S<=S+1   |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | X<=M     |
-
-Flags update: N Z
-
-### FD : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 1 | AB<=PC        |        |          |          | M<=DB |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=A-M   |
-
-Flags update: C N Z V
-
-### FE : 
-|mod|      AB       |   AH   |    PC    |    DO    |   M   |   REG    |
-|---|---------------|--------|----------|----------|-------|----------|
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |          |
-| 2 | AB<={DB,AH}+X |        | PC<=AB+1 |          | M<=DB |          |
-| 0 | AB<=AB+0      |        |          |          | M<=DB |          |
-| 1 | AB<=PC        |        |          | DO=1+M   |       |          |
-| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB |    1+M   |
+| 4 | AB<=AB+1      | AH<=DB |          |          | M<=DB | A<=Y     |
 
 Flags update: N Z
 
