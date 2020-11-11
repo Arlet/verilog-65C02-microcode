@@ -38,6 +38,7 @@
 module ctl(
     input clk,
     input irq,
+    input nmi,
     input reset,
     output sync,
     input cond,
@@ -68,6 +69,8 @@ reg [4:0] finish;   // finishing code
 
 microcode rom(
     .clk(clk),
+    .enable(1'b1),
+    .reset(reset),
     .addr(pc),
     .data(control) );
 
@@ -87,6 +90,7 @@ assign sync = (control[23:22] == 2'b00);
  * The bits in control[23:22] tell what to do:
  *
  * when 00 -> decode next instruction, form address in bottom 256 words.
+ *            or jump to IRQ/NMI handler if necessary.
  * when 01 -> jump to next microcode instruction in area 9'h100-9'h17F
  * when 10 -> jump to finishing code in area 9'h140-9'h15F.
  * when 11 -> jump to next, but also save pointer to finishing code
@@ -94,15 +98,49 @@ assign sync = (control[23:22] == 2'b00);
 
 wire take_irq = irq & ~I;
 
-// TODO : use 3-bit control signal instead.
+/*
+ * First, form a 2 bit select signal from the interrupt signals
+ * and control bits.
+ * 
+ * sel_pc 
+ * ------
+ * 00 fetch
+ * 01 next
+ * 10 finish
+ * 11 IRQ/NMI
+ */
+reg [1:0] sel_pc;
+
 always @(*)
-    if( reset )
-        pc = 9'h160;
-    else casez( {control[23:22], take_irq} )
-        3'b000:         pc = {1'b0, DB};                // look up next instruction at @000
-        3'b001:         pc = {9'h168};                  // take IRQ at @168
-        3'b?1?:         pc = {1'b1, D, control[6:0]};   // microcode at @100/@180
-        3'b10?:         pc = {1'b1, D, 2'b10, finish }; // finish code at @140/@1C0
+    casez( {nmi, take_irq, control[23:22]} )
+        4'b1?00:    sel_pc = 2'b11;                 // take NMI
+        4'b0100:    sel_pc = 2'b11;                 // take IRQ
+        4'b00?1:    sel_pc = 2'b01;                 // next
+        4'b0000:    sel_pc = 2'b00;                 // fetch
+        4'b0010:    sel_pc = 2'b10;                 // finish 
+    endcase
+
+/* 
+ * 9 bit address in microcode ROM (the 'pc')
+ *
+ * sel   8   7   6   5   4   3   2   1   0
+ *     +---+---+---+---+---+---+---+---+---+
+ * 00: | 0 |           opcode (DB)         |   opcode lookup
+ *     +---+---+---+---+---+---+---+---+---+
+ * 01: | 1 | D |        jmp next           |   next instruction 
+ *     +---+---+---+---+---+---+---+---+---+
+ * 10: | 1 | D | 1   0 |      finish       |   finish handler 
+ *     +---+---+---+---+---+---+---+---+---+
+ * 11: | 1 |N/I| 1   1   0   0   0   0   0 |   IRQ/NMI handler @160
+ *     +---+---+---+---+---+---+---+---+---+
+ */
+
+always @(*)
+    case( sel_pc )
+        2'b00:      pc = {1'b0, DB};                // look up next instruction at @000-@0FF
+        2'b01:      pc = {1'b1, D, control[6:0]};   // microcode at @100/@180
+        2'b10:      pc = {1'b1, D, 2'b10, finish }; // finish code at @140/@1C0
+        2'b11:      pc = {1'b1, nmi, 7'b1100000 };  // take NMI/IRQ at @1E0/160
     endcase
 
 /*
