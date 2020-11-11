@@ -160,7 +160,6 @@ always @(posedge clk)
     else if( ld_m )
         M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
-
 /*
  * update C(arry) flag
  */
@@ -234,13 +233,27 @@ always @(posedge clk)
  * 10 - CLD/SED
  * 11 - BRK
  */
-always @(posedge clk)
+
+/* 
+ * Interrupt handling needs to know the I flag on the
+ * 'sync' cycle, so we produce an early result in 'next_I'
+ * and export that as the 'mask_irq' signal.
+ */
+reg next_I;
+assign mask_irq = next_I;
+
+always @(*) begin
+    next_I = I;
     if( sync )
         casez( {plp, flag_op[6:5]} )
-            3'b001 : I <= M[5];         // CLI/SEI 
-            3'b011 : I <= 1;            // BRK
-            3'b1?? : I <= M[2];         // PLP
+            3'b001 : next_I = M[5];     // CLI/SEI 
+            3'b011 : next_I = 1;        // BRK
+            3'b1?? : next_I = M[2];     // PLP
         endcase
+end
+
+always @(posedge clk)
+    I <= next_I;
 
 always @(posedge clk)
     if( sync )

@@ -5,6 +5,7 @@
  */
 module regfile(
     input clk,
+    input rdy,
     input [6:0] op,
     input [7:0] DI,
     output [7:0] DO );
@@ -24,6 +25,13 @@ initial begin
     regs[9]  = 8'hfb;                   // RST - 1
     regs[10] = 8'hfd;                   // BRK - 1
 end
+
+`ifdef SIM
+wire [7:0] X = regs[0];
+wire [7:0] Y = regs[1];
+wire [7:0] A = regs[2];
+wire [7:0] S = regs[3];
+`endif
 
 wire [4:0] reg_wr = {3'b000, op[5:4] }; 
 wire [4:0] reg_rd = {1'b0,   op[3:0] };

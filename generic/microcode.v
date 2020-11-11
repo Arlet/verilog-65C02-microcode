@@ -3,7 +3,7 @@ module microcode(
     input enable,
     input reset,
     input [8:0] addr,
-    output reg [30:0] data );
+    output reg [31:0] data );
 
 localparam RESET = 32'b000_00000_01_000_0000_00000_00_01110000;
 

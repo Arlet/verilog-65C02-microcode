@@ -8,6 +8,7 @@
 module abl( 
     input clk,
     input CI,               // carry input
+    input rdy,              // RDY input 
     input cond,             // condition code input
     output reg CO,          // carry output
     input [7:0] DB,         // Data Bus 

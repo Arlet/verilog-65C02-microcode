@@ -5,6 +5,7 @@
  */
 module abh( 
     input clk,
+    input rdy,
     input CI,               // carry input from ABL module
     input [7:0] DB,         // Data Bus
     input [3:0] op,         // operation

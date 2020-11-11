@@ -5,18 +5,17 @@
  *
  */
 
-module cpu( clk, RST, AD, DI, DO, WE, IRQ, NMI, RDY, debug );
-
-input clk;              // CPU clock
-input RST;              // RST signal
-output [15:0] AD;       // address bus (combinatorial) 
-input [7:0] DI;         // data bus input
-output reg [7:0] DO;    // data bus output 
-output WE;              // write enable
-input IRQ;              // interrupt request
-input NMI;              // non-maskable interrupt request
-input RDY;              // Ready signal. Pauses CPU when RDY=0
-input debug;            // debug for simulation
+module cpu( 
+    input clk,              			// CPU clock
+    input RST,              			// RST signal
+    output [15:0] AD,       			// address bus (combinatorial) 
+    input [7:0] DI,         			// data bus input
+    output reg [7:0] DO,    			// data bus output 
+    output WE,              			// write enable
+    input IRQ,              			// interrupt request
+    input NMI,              			// non-maskable interrupt request
+    input RDY,              			// Ready signal. Pauses CPU when RDY=0
+    input debug );          			// debug for simulation
 
 wire [7:0] ADH;                         // address bus high
 wire [7:0] ADL;                         // address bus low 
@@ -28,7 +27,7 @@ assign AD = {ADH, ADL};
 /*
  * databus
  */
-wire [7:0] DB = DI;                     // data bus low (alias for DB)
+wire [7:0] DB = DI;                     // data bus (alias for DB)
 
 /*
  * Address Bus signals 
@@ -40,13 +39,12 @@ wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[10];                 // load enable for PC 
 wire ld_ahl = ab_op[9];                 // load enable for AHL
 wire [3:0] abh_op = ab_op[8:5];         // ABH operation
-wire [4:0] abl_op = ab_op[4:1];         // ABL operation
+wire [3:0] abl_op = ab_op[4:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
 wire abh_ci = abl_co;
 
 wire [1:0] do_op;                       // select for Data Output
-wire ld_m = ~do_op[0];                  // load enable for M register
 wire adj_m = do_op[1];                  // use M for BCD adjust
 
 /* 
@@ -54,16 +52,18 @@ wire adj_m = do_op[1];                  // use M for BCD adjust
  */
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
+wire ld_m;                              // load M register
+wire mask_irq;                          // indicates whether IRQs are masked
 
 /*
  * Flags and flag updates
  */
 wire sync;                              // start of new instruction
-wire [9:0] flag_op;                     // flag control bits
-reg cond;                               // condition code
-wire B;                                 // BRK flag
-wire [7:0] P;                           // P register
-wire D = P[3];                          // ctl module needs to know D flag
+wire [9:0] flag_op;                     // flag operation select bits
+wire cond;                              // condition code
+wire B;					// BRK flag
+wire [7:0] P;                           // processor status flags
+wire D = P[3];                          // take out D for controller 
 
 /*
  * Register file signals
@@ -77,6 +77,7 @@ wire [7:0] R;
  */
 regfile regfile(
     .clk(clk),
+    .rdy(RDY),
     .op(reg_op),
     .DI(alu_out),
     .DO(R) );
@@ -86,6 +87,7 @@ regfile regfile(
  */
 abl abl(
     .clk(clk),
+    .rdy(RDY),
     .CI(abl_ci),
     .CO(abl_co),
     .cond(cond),
@@ -105,6 +107,7 @@ abl abl(
  */
 abh abh(
     .clk(clk),
+    .rdy(RDY),
     .CI(abh_ci),
     .op(abh_op) ,
     .ld_pc(ld_pc),
@@ -151,15 +154,18 @@ alu alu(
 ctl ctl( 
     .clk(clk),
     .irq(IRQ),
+    .rdy(RDY),
+    .nmi(NMI),
     .reset(RST),
     .cond(cond),
     .sync(sync),
-    .flags(flag_op),
+    .flag_op(flag_op),
     .alu_op(alu_op),
     .reg_op(reg_op),
     .ab_op(ab_op),
     .do_op(do_op),
-    .I(I),
+    .ld_m(ld_m),
+    .I(mask_irq),
     .D(D),
     .B(B),
     .WE(WE),
@@ -203,6 +209,7 @@ always @*
             8'b0010_0000: opcode = "JSR";
             8'b0010_1000: opcode = "PLP";
             8'b001?_?100: opcode = "BIT";
+            8'b1000_1001: opcode = "BIT";
             8'b001?_??01: opcode = "AND";
             8'b0011_0000: opcode = "BMI";
             8'b0011_1010: opcode = "DEA";
@@ -265,7 +272,7 @@ always @*
             default:      opcode = "___";
     endcase
 
-wire [7:0] B_ = B ? "B" : "-";
+wire [7:0] B_ = alu.B ? "B" : "-";
 wire [7:0] C_ = alu.C ? "C" : "-";
 wire [7:0] D_ = alu.D ? "D" : "-";
 wire [7:0] I_ = alu.I ? "I" : "-";
@@ -274,19 +281,20 @@ wire [7:0] V_ = alu.V ? "V" : "-";
 wire [7:0] Z_ = alu.Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
 wire [7:0] Q_ = IRQ ? "I" : "-";
+wire [7:0] W_ = RDY ? "-" : "W";
 
 integer cycle;
 
 always @( posedge clk )
     cycle <= cycle + 1;
 
-wire [7:0] X = regfile.regs[0];
-wire [7:0] Y = regfile.regs[1];
-wire [7:0] A = regfile.regs[2];
-wire [7:0] S = regfile.regs[3];
+wire [7:0] X = regfile.X;
+wire [7:0] Y = regfile.Y;
+wire [7:0] A = regfile.A;
+wire [7:0] S = regfile.S;
 
 always @( posedge clk ) begin
-      if( !debug || /*cycle < 150000 || */ cycle[10:0] == 0 )
+      if( !debug || cycle < 150000 || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  

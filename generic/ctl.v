@@ -39,15 +39,17 @@ module ctl(
     input clk,
     input irq,
     input nmi,
+    input rdy,
     input reset,
     output sync,
     input cond,
     input [7:0] DB,
     output reg WE,
-    output [9:0] flags,
+    output [9:0] flag_op,
     output [6:0] alu_op,
     output [6:0] reg_op,
     output [1:0] do_op,
+    output ld_m,
     input I,
     input D,
     output B,
@@ -59,7 +61,8 @@ wire [1:0] ci;
 wire [3:0] src;
 wire [2:0] dst;
 
-assign flags = {control[30:29], control[7:0]};
+assign ld_m = control[31] & rdy;
+assign flag_op = {control[30:29], control[7:0]};
 assign alu_op = { shift, adder, ci };
 assign reg_op = control[21:15];
 
