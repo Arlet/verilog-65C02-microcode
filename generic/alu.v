@@ -21,13 +21,13 @@ module alu(
     input B,                // BRK flag
     output mask_irq,        // one cycle early I flag notification 
     output [7:0] P,         // flags register
-    output cond,            // condition code 
-    output [7:0] OUT,       // data out
-    output CO               // carry out
+    output reg cond,        // condition code 
+    output [7:0] OUT        // data out
 );
 
+reg CO, CO1;
 reg N, V, D, I, Z, C;                   // processor status flags 
-wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
+assign P = { N, V, 1'b1, B, D, I, Z, C };
 
 reg [7:0] M;
 reg CI, SI;
@@ -172,7 +172,6 @@ wire plp = flag_op[2];
  * can generate a carry in the main cycle or the adjust
  * cycle.
  */
-reg CO1; 
 
 always @(posedge clk)
     CO1 <= CO;
