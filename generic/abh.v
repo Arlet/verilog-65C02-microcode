@@ -15,54 +15,44 @@ module abh(
 );
 
 reg [7:0] ABH;
-reg [7:0] ADH0;             // assume CI = 0
-reg [7:0] ADH1;             // assume CI = 1
+reg [7:0] base;
 
 /*   
- * op[1:0] |  function
- * ========|=========== 
- *    00   |  ABH + 00 + CI
- *    01   |  ABH + FF + CI
- *    10   |  PCH + 00 + CI 
- *    11   |  DB  + 00 + CI
+ *  op  |  base
+ * =====|========= 
+ * 00-- |  00
+ * 01-- |  ABH
+ * 10-- |  PCH
+ * 11-- |  DB
  */ 
-
-/*
- * ADH0 assumes CI is 0.
- */
-always @(*)
-    case( op[1:0] )
-        2'b00: ADH0 = ABH + 8'h00;
-        2'b01: ADH0 = ABH + 8'hff;
-        2'b10: ADH0 = PCH + 8'h00;
-        2'b11: ADH0 = DB  + 8'h00;
-    endcase
-
-/*
- * ADH1 assumes CI is 1.
- */
-always @(*)
-    case( op[1:0] )
-        2'b00: ADH1 = ABH + 8'h01;
-        2'b01: ADH1 = ABH + 8'h00;
-        2'b10: ADH1 = PCH + 8'h01;
-        2'b11: ADH1 = DB  + 8'h01;
-    endcase
-
-/*
- * op[3:2] |  function
- * ========|=========== 
- *    00   |  PAGE 00
- *    01   |  PAGE 01
- *    10   |  ADH0/ADH1  
- *    11   |  PAGE FF
- */
 always @(*)
     case( op[3:2] )
-        2'b00:  ADH = 8'h00;
-        2'b01:  ADH = 8'h01;
-        2'b10:  ADH = CI ? ADH1 : ADH0;
-        2'b11:  ADH = 8'hff;
+        2'b00: base = 8'h0; 
+        2'b01: base = ABH; 
+        2'b10: base = PCH;
+        2'b11: base = DB;
+    endcase
+
+ 
+/*
+ * ADH adder
+ *
+ *  op  | value added to base
+ * =====|====================
+ * --00 | +0 
+ * --01 | +1 
+ * --10 | +CI 
+ * --11 | -1 + CI 
+ */
+
+always @(*)
+    casez( {CI, op[1:0]} )
+        3'b?00: ADH = base + 8'h00;
+        3'b?01: ADH = base + 8'h01;
+        3'b010: ADH = base + 8'h00;
+        3'b110: ADH = base + 8'h01;
+        3'b011: ADH = base + 8'hff;
+        3'b111: ADH = base + 8'h00;
     endcase
 
 /*

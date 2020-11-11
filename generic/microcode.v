@@ -3,7 +3,7 @@ module microcode(
     input [8:0] addr,
     output reg [30:0] data );
 
-reg [30:0] rom[0:511];
+reg [31:0] rom[0:511];
 
 initial $readmemb( "microcode.hex", rom, 0 );
 
