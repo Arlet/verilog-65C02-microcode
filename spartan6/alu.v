@@ -177,8 +177,8 @@ LUT5 #(.INIT(32'h55550000)) lut_bi7( .O(BI7), .I0(adj_m), .I1(DB[0]), .I2(DB[3])
  * The BI bits 1 and 2 are equal to 'adjl' when doing BCD adjust, or DB otherwise 
  * Keep all LUT inputs the same so they can be packed.
  */
-LUT5 #(.INIT(32'hd8d8d8d8)) lut_bi1( .O(BI1), .I0(adj_m), .I1(adjl), .I2(DB[1]), .I3(DB[2]), .I4(x) );
-LUT5 #(.INIT(32'hdd88dd88)) lut_bi2( .O(BI2), .I0(adj_m), .I1(adjl), .I2(DB[1]), .I3(DB[2]), .I4(x) );
+LUT4 #(.INIT(32'hd8d8d8d8)) lut_bi1( .O(BI1), .I0(adj_m), .I1(adjl), .I2(DB[1]), .I3(DB[2]) );
+LUT4 #(.INIT(32'hdd88dd88)) lut_bi2( .O(BI2), .I0(adj_m), .I1(adjl), .I2(DB[1]), .I3(DB[2]) );
 
 /* 
  * The BI bits 5 and 6 are equal to '(adjh & add[7]) | (SBC ^ C8)' when doing BCD, or DB otherwise

@@ -57,14 +57,14 @@ always @(*)
  *
  *   op      function
  * ===============================
- * --000  |  R | M      OR 
- * --001  |  R & M      AND
- * --010  |  R ^ M      EOR
- * --011  |  R + M      ADC (also INC/DEC with suitable R)
- * --100  |  R + 0      pass R or INC depending on CI
- * --101  |  R - 1      DEC
- * --110  |  R - M      SBC/CMP
- * --111  | ~R & M      TRB
+ * --000  |  AI | BI     OR 
+ * --001  |  AI & BI     AND
+ * --010  |  AI ^ BI     EOR
+ * --011  |  AI + BI     ADC (also INC/DEC with suitable R)
+ * --100  |  AI + 0      pass R or INC depending on CI
+ * --101  |  AI - 1      DEC
+ * --110  |  AI - BI     SBC/CMP
+ * --111  | ~AI & BI     TRB
  *
  * NOTE: Carry input is always added to each function. This
  * is necessary to make it fit in a single LUT. If this is
@@ -81,19 +81,21 @@ reg [8:0] adder;
  * 8 bit inverted version of M and R (to avoid creating
  * 9 bit expressions)(when ~M is used in the expression, 
  */
-wire [7:0] NM = ~M;
-wire [7:0] NR = ~R;
+wire [7:0] AI = R;
+reg [7:0] BI;
+wire [7:0] NB = ~BI;
+wire [7:0] NA = ~AI;
 
 always @(*)
     case( op[4:2] )
-        3'b000: adder = (R | M)     + CI;
-        3'b001: adder = (R & M)     + CI;
-        3'b010: adder = (R ^ M)     + CI;
-        3'b011: adder = (R + M)     + CI;
-        3'b100: adder = (R + 8'h00) + CI;
-        3'b101: adder = (R + 8'hff) + CI; 
-        3'b110: adder = (R + NM)    + CI;
-        3'b111: adder = (M & NR)    + CI;
+        3'b000: adder = (AI | BI)    + CI;
+        3'b001: adder = (AI & BI)    + CI;
+        3'b010: adder = (AI ^ BI)    + CI;
+        3'b011: adder = (AI + BI)    + CI;
+        3'b100: adder = (AI + 8'h00) + CI;
+        3'b101: adder = (AI + 8'hff) + CI; 
+        3'b110: adder = (AI + NB)    + CI;
+        3'b111: adder = (BI & NA)    + CI;
     endcase
 
 /*
@@ -133,7 +135,6 @@ assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
  * op       function
  * ===============================
  * 00---  | unmodified adder result
- * 01---  | bypassed M input
  * 10---  | adder shift left
  * 11---  | adder shift right
  */
@@ -155,10 +156,15 @@ wire l = adjl;
 wire h = adjh;
 
 always @(posedge clk)
-    if( sync )
+    if( ld_m )
         M <= DB;
-    else if( ld_m )
-        M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
+
+/*
+ * BI (B Input of the ALU) register update
+ */
+always @(posedge clk)
+    if( ld_m )
+        BI <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
 /*
  * update C(arry) flag
@@ -192,7 +198,6 @@ always @(posedge clk)
  * 01 - BIT (N <= M7, Z <= alu_out)
  * 10 - PLP
  * 11 - N/Z <= alu_out
- *
  */
 always @(posedge clk)
     if( sync )
@@ -279,6 +284,5 @@ always @(*)
         4'b110?:        cond = ~Z;     // BNE
         4'b111?:        cond = Z;      // BEQ
     endcase
-
 
 endmodule
