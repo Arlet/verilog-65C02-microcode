@@ -58,8 +58,6 @@ wire alu_v;                             // ALU overflow output
 wire alu_co;                            // ALU carry out
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
-reg alu_ci;                             // ALU carry in 
-reg alu_si;                             // ALU shift in
 wire adjh;                              // BCD adjust high
 wire adjl;                              // BCD adjust low 
 
@@ -152,25 +150,13 @@ always @(*)
     endcase
 
 /*
- * ALU carry in and shift in
- */
-always @(*)
-    case( alu_op[6:5] )
-        2'b00:          {alu_si, alu_ci} = 2'b00;
-        2'b01:          {alu_si, alu_ci} = 2'b01;
-        2'b10:          {alu_si, alu_ci} = {C, 1'b0};
-        2'b11:          {alu_si, alu_ci} = {1'b0, C};
-    endcase
-
-/*
  * ALU
  */
 alu alu(
-    .CI(alu_ci),
-    .SI(alu_si),
+    .C(C),
     .R(R),
     .M(M),
-    .op(alu_op[4:0]),
+    .op(alu_op),
     .V(alu_v),
     .adjh(adjh),
     .adjl(adjl),

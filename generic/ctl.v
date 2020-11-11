@@ -60,7 +60,7 @@ wire [3:0] src;
 wire [2:0] dst;
 
 assign flags = {control[30:29], control[7:0]};
-assign alu_op = { ci, shift, adder };
+assign alu_op = { shift, adder, ci };
 assign reg_op = control[21:15];
 
 reg [8:0] pc;

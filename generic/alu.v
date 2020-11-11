@@ -9,17 +9,29 @@
  *
  */
 module alu( 
-    input CI,               // carry in
-    input SI,               // shift in
+    input C,                // carry in
     input [7:0] R,          // input from register file
     input [7:0] M,          // input from memory
-    input [4:0] op,         // 5-bit operation select
+    input [6:0] op,         // 5-bit operation select
     output V,               // overflow output
     output adjh,            // BCD adjust needed, high nibble
     output adjl,            // BCD adjust needed, low nibble
     output reg [7:0] OUT,   // data out
     output reg CO           // carry out
 );
+
+reg CI, SI;
+
+/*
+ * ALU carry in and shift in
+ */
+always @(*)
+    case( op[1:0] )
+        2'b00:      {SI, CI} = 2'b00;
+        2'b01:      {SI, CI} = 2'b01;
+        2'b10:      {SI, CI} = {C, 1'b0};
+        2'b11:      {SI, CI} = {1'b0, C};
+    endcase
 
 /*   
  * 1st stage, calculate adder result from the two operands:
@@ -63,7 +75,7 @@ wire [7:0] NM = ~M;
 wire [7:0] NR = ~R;
 
 always @(*)
-    case( op[2:0] )
+    case( op[4:2] )
         3'b000: adder = (R | M)     + CI;
         3'b001: adder = (R & M)     + CI;
         3'b010: adder = (R ^ M)     + CI;
@@ -78,7 +90,7 @@ always @(*)
  * distinguish ADC/SBC, not valid when doing
  * other operations.
  */
-wire SBC = op[2];
+wire SBC = op[4];
 
 /*
  * intermediate borrow/carry bits. The number indicates 
@@ -117,7 +129,7 @@ assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
  */
 
 always @(*)
-    casez( op[4:3] )
+    casez( op[6:5] )
         2'b0?: {CO, OUT} = adder;
         2'b10: {CO, OUT} = { adder[7:0], SI };
         2'b11: {OUT, CO} = { SI, adder[7:0] };
