@@ -30,8 +30,6 @@ assign AD = {ADH, ADL};
  */
 wire [7:0] DB = DI;                     // data bus low (alias for DB)
 
-//reg [7:0] M;                            // registered value of DB
-
 /*
  * Address Bus signals 
  */
@@ -54,12 +52,8 @@ wire adj_m = do_op[1];                  // use M for BCD adjust
 /* 
  * ALU Signals
  */
-wire alu_v;                             // ALU overflow output
-wire alu_co;                            // ALU carry out
 wire [6:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
-wire adjh;                              // BCD adjust high
-wire adjl;                              // BCD adjust low 
 
 /*
  * Flags and flag updates
@@ -149,9 +143,7 @@ alu alu(
     .cond(cond),
     .ld_m(ld_m),
     .adj_m(adj_m),
-    .OUT(alu_out),
-    .CO(alu_co) );
-
+    .OUT(alu_out) );
 
 /*
  * Control. Generates all control signals.
@@ -294,11 +286,11 @@ wire [7:0] A = regfile.regs[2];
 wire [7:0] S = regfile.regs[3];
 
 always @( posedge clk ) begin
-      if( !debug || cycle < 150000 || cycle[10:0] == 0 )
+      if( !debug || /*cycle < 150000 || */ cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, adjh, adjl,
+       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu.CO, 
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
