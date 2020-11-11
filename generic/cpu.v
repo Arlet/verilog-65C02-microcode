@@ -30,7 +30,7 @@ assign AD = {ADH, ADL};
  */
 wire [7:0] DB = DI;                     // data bus low (alias for DB)
 
-reg [7:0] M;                            // registered value of DB
+//reg [7:0] M;                            // registered value of DB
 
 /*
  * Address Bus signals 
@@ -65,12 +65,11 @@ wire adjl;                              // BCD adjust low
  * Flags and flag updates
  */
 wire sync;                              // start of new instruction
-wire [9:0] flags;                       // flag control bits
+wire [9:0] flag_op;                     // flag control bits
 reg cond;                               // condition code
-reg N, V, D, I, Z, C;                   // processor status flags 
-wire B;
-
-wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
+wire B;                                 // BRK flag
+wire [7:0] P;                           // P register
+wire D = P[3];                          // ctl module needs to know D flag
 
 /*
  * Register file signals
@@ -121,22 +120,6 @@ abh abh(
     .DB(DB)
 );
 
-
-/*
- * M register update. The M register holds the most
- * recent data on the bus. It feeds into the ALU, 
- * and also into flag updates.
- */
-
-wire l = adjl;
-wire h = adjh;
-
-always @(posedge clk)
-    if( sync )
-        M <= DB;
-    else if( ld_m )
-        M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
-
 /*
  * DO (Data Output) mux. The DO value goes out to
  * the data bus, but only if WE is asserted,
@@ -153,15 +136,22 @@ always @(*)
  * ALU
  */
 alu alu(
-    .C(C),
+    .clk(clk),
+    .rdy(RDY),
+    .sync(sync),
+    .DB(DB),
     .R(R),
-    .M(M),
+    .B(B),
+    .P(P),
     .op(alu_op),
-    .V(alu_v),
-    .adjh(adjh),
-    .adjl(adjl),
+    .mask_irq(mask_irq),
+    .flag_op(flag_op),
+    .cond(cond),
+    .ld_m(ld_m),
+    .adj_m(adj_m),
     .OUT(alu_out),
     .CO(alu_co) );
+
 
 /*
  * Control. Generates all control signals.
@@ -172,7 +162,7 @@ ctl ctl(
     .reset(RST),
     .cond(cond),
     .sync(sync),
-    .flags(flags),
+    .flags(flag_op),
     .alu_op(alu_op),
     .reg_op(reg_op),
     .ab_op(ab_op),
@@ -182,113 +172,6 @@ ctl ctl(
     .B(B),
     .WE(WE),
     .DB(DB) );
-
-/*
- * update C(arry) flag
- */
-wire plp = flags[2];
-
-/*
- * the alu_co_1 signal is the ALU carry out, delayed
- * by one cycle. This is because the BCD instructions
- * can generate a carry in the main cycle or the adjust
- * cycle.
- */
-reg alu_co_1; 
-
-always @(posedge clk)
-    alu_co_1 <= alu_co;
-
-always @(posedge clk)
-    if( sync )
-        casez( flags[1:0] )
-            2'b01 : C <= alu_co_1;          // delayed carry (not usd)
-            2'b10 : C <= alu_co | alu_co_1; // BCD carry
-            2'b11 : C <= alu_co;            // ALU carry out 
-        endcase
-
-/*
- * update N(egative) flag and Z(ero) flag
- *
- * The N/Z flags share two control bits in flags[4:3]
- *
- * 00 - do nothing
- * 01 - BIT (N <= M7, Z <= alu_out)
- * 10 - PLP
- * 11 - N/Z <= alu_out
- *
- */
-always @(posedge clk)
-    if( sync )
-        casez( flags[4:3] )
-            2'b01 : N <= M[7];         // BIT (bit 7) 
-            2'b10 : N <= M[7];         // PLP
-            2'b11 : N <= alu_out[7];   // ALU N flag 
-        endcase
-
-/*
- * update Z(ero) flag
- */
-always @(posedge clk)
-    if( sync )
-        casez( {flags[9], flags[2]} )
-            2'b01 : Z <= M[1];         // PLP
-            2'b10 : Z <= ~|alu_out;    // ALU == 0 
-        endcase
-
-/*
- * update (o)V(erflow) flag
- *
- */
-always @(posedge clk)
-    if( sync )
-        case( flags[8:7] )
-            2'b01 : V <= alu_v;
-            2'b11 : V <= M[6];        // BIT/PLP
-        endcase
-
-/*
- * update I(nterrupt) flag and D(ecimal) flags
- *
- * The I/D flags share two control bits in flags[6:5]
- *
- * 00 - do nothing
- * 01 - CLI/SEI
- * 10 - CLD/SED
- * 11 - BRK
- */
-always @(posedge clk)
-    if( sync )
-        casez( {plp, flags[6:5]} )
-            3'b001 : I <= M[5];         // CLI/SEI 
-            3'b011 : I <= 1;            // BRK
-            3'b1?? : I <= M[2];         // PLP
-        endcase
-
-always @(posedge clk)
-    if( sync )
-        casez( {plp, flags[6:5]} )
-            3'b010 : D <= M[5];         // CLD/SED 
-            3'b011 : D <= 0;            // clear D in BRK
-            3'b1?0 : D <= M[3];         // PLP
-        endcase
-
-/*
- * branch condition. 
- */
-always @(*)
-    if( M[0] | M[1] | M[2] )  cond = 1;      // non-conditional instructions
-    else casez( M[7:4] )
-        4'b000?:        cond = ~N;     // BPL
-        4'b001?:        cond = N;      // BMI
-        4'b010?:        cond = ~V;     // BVC
-        4'b011?:        cond = V;      // BVS
-        4'b1000:        cond = 1;      // BRA
-        4'b100?:        cond = ~C;     // BCC
-        4'b101?:        cond = C;      // BCS
-        4'b110?:        cond = ~Z;     // BNE
-        4'b111?:        cond = Z;      // BEQ
-    endcase
 
 /*
  * mnemonic opcode name
@@ -391,12 +274,12 @@ always @*
     endcase
 
 wire [7:0] B_ = B ? "B" : "-";
-wire [7:0] C_ = C ? "C" : "-";
-wire [7:0] D_ = D ? "D" : "-";
-wire [7:0] I_ = I ? "I" : "-";
-wire [7:0] N_ = N ? "N" : "-";
-wire [7:0] V_ = V ? "V" : "-";
-wire [7:0] Z_ = Z ? "Z" : "-";
+wire [7:0] C_ = alu.C ? "C" : "-";
+wire [7:0] D_ = alu.D ? "D" : "-";
+wire [7:0] I_ = alu.I ? "I" : "-";
+wire [7:0] N_ = alu.N ? "N" : "-";
+wire [7:0] V_ = alu.V ? "V" : "-";
+wire [7:0] Z_ = alu.Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
 wire [7:0] Q_ = IRQ ? "I" : "-";
 
@@ -415,8 +298,8 @@ always @( posedge clk ) begin
       //if( !debug || cycle > 77600000 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
-       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, M, alu_out, alu_co, adjh, adjl,
-       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flags : 8'h0 );
+       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, adjh, adjl,
+       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end

@@ -9,17 +9,27 @@
  *
  */
 module alu( 
-    input C,                // carry in
+    input clk,              // clk
+    input rdy,              // RDY input
+    input sync,             // opcode sync
     input [7:0] R,          // input from register file
-    input [7:0] M,          // input from memory
-    input [6:0] op,         // 5-bit operation select
-    output V,               // overflow output
-    output adjh,            // BCD adjust needed, high nibble
-    output adjl,            // BCD adjust needed, low nibble
-    output reg [7:0] OUT,   // data out
-    output reg CO           // carry out
+    input [7:0] DB,         // data bus
+    input [6:0] op,         // 7-bit operation select
+    input [9:0] flag_op,    // 10-bit flag operation select
+    input ld_m,             // load enable for M
+    input adj_m,            // load BCD adjustment
+    input B,                // BRK flag
+    output mask_irq,        // one cycle early I flag notification 
+    output [7:0] P,         // flags register
+    output cond,            // condition code 
+    output [7:0] OUT,       // data out
+    output CO               // carry out
 );
 
+reg N, V, D, I, Z, C;                   // processor status flags 
+wire [7:0] P = { N, V, 1'b1, B, D, I, Z, C };
+
+reg [7:0] M;
 reg CI, SI;
 
 /*
@@ -103,7 +113,7 @@ wire BC8 = SBC ^ adder[8];
 /*
  * overflow
  */
-assign V = BC7 ^ BC8;
+//assign V = BC7 ^ BC8;
 
 /* 
  * BCD adjust for each of the 2 nibbles
@@ -134,5 +144,129 @@ always @(*)
         2'b10: {CO, OUT} = { adder[7:0], SI };
         2'b11: {OUT, CO} = { SI, adder[7:0] };
     endcase
+
+/*
+ * M register update. The M register holds the most
+ * recent data on the bus. It feeds into the ALU, 
+ * and also into flag updates.
+ */
+
+wire l = adjl;
+wire h = adjh;
+
+always @(posedge clk)
+    if( sync )
+        M <= DB;
+    else if( ld_m )
+        M <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
+
+
+/*
+ * update C(arry) flag
+ */
+wire plp = flag_op[2];
+
+/*
+ * the alu_co_1 signal is the ALU carry out, delayed
+ * by one cycle. This is because the BCD instructions
+ * can generate a carry in the main cycle or the adjust
+ * cycle.
+ */
+reg CO1; 
+
+always @(posedge clk)
+    CO1 <= CO;
+
+always @(posedge clk)
+    if( sync )
+        casez( flag_op[1:0] )
+            2'b01 : C <= CO1;               // delayed carry (not usd)
+            2'b10 : C <= CO | CO1;          // BCD carry
+            2'b11 : C <= CO;                // ALU carry out 
+        endcase
+
+/*
+ * update N(egative) flag and Z(ero) flag
+ *
+ * The N/Z flags share two control bits in flags[4:3]
+ *
+ * 00 - do nothing
+ * 01 - BIT (N <= M7, Z <= alu_out)
+ * 10 - PLP
+ * 11 - N/Z <= alu_out
+ *
+ */
+always @(posedge clk)
+    if( sync )
+        casez( flag_op[4:3] )
+            2'b01 : N <= M[7];          // BIT (bit 7) 
+            2'b10 : N <= M[7];          // PLP
+            2'b11 : N <= OUT[7];        // ALU N flag 
+        endcase
+
+/*
+ * update Z(ero) flag
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {flag_op[9], flag_op[2]} )
+            2'b01 : Z <= M[1];         // PLP
+            2'b10 : Z <= ~|OUT;        // ALU == 0 
+        endcase
+
+/*
+ * update (o)V(erflow) flag
+ *
+ */
+always @(posedge clk)
+    if( sync )
+        case( flag_op[8:7] )
+            2'b01 : V <= BC7 ^ BC8;
+            2'b11 : V <= M[6];        // BIT/PLP
+        endcase
+
+/*
+ * update I(nterrupt) flag and D(ecimal) flags
+ *
+ * The I/D flags share two control bits in flag_op[6:5]
+ *
+ * 00 - do nothing
+ * 01 - CLI/SEI
+ * 10 - CLD/SED
+ * 11 - BRK
+ */
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flag_op[6:5]} )
+            3'b001 : I <= M[5];         // CLI/SEI 
+            3'b011 : I <= 1;            // BRK
+            3'b1?? : I <= M[2];         // PLP
+        endcase
+
+always @(posedge clk)
+    if( sync )
+        casez( {plp, flag_op[6:5]} )
+            3'b010 : D <= M[5];         // CLD/SED 
+            3'b011 : D <= 0;            // clear D in BRK
+            3'b1?0 : D <= M[3];         // PLP
+        endcase
+
+/*
+ * branch condition. 
+ */
+always @(*)
+    if( M[0] | M[1] | M[2] )  cond = 1;      // non-conditional instructions
+    else casez( M[7:4] )
+        4'b000?:        cond = ~N;     // BPL
+        4'b001?:        cond = N;      // BMI
+        4'b010?:        cond = ~V;     // BVC
+        4'b011?:        cond = V;      // BVS
+        4'b1000:        cond = 1;      // BRA
+        4'b100?:        cond = ~C;     // BCC
+        4'b101?:        cond = C;      // BCS
+        4'b110?:        cond = ~Z;     // BNE
+        4'b111?:        cond = Z;      // BEQ
+    endcase
+
 
 endmodule
