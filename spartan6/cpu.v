@@ -6,17 +6,17 @@
  */
 
 module cpu( 
-    input clk,              			// CPU clock
-    input RST,              			// RST signal
+    input clk,                          // CPU clock
+    input RST,                          // RST signal
     output sync,                        // sync signal
-    output [15:0] AD,       			// address bus (combinatorial) 
-    input [7:0] DI,         			// data bus input
-    output reg [7:0] DO,    			// data bus output 
-    output WE,              			// write enable
-    input IRQ,              			// interrupt request
-    input NMI,              			// non-maskable interrupt request
-    input RDY,              			// Ready signal. Pauses CPU when RDY=0
-    input debug );          			// debug for simulation
+    output [15:0] AD,                   // address bus (combinatorial) 
+    input [7:0] DI,                     // data bus input
+    output reg [7:0] DO,                // data bus output 
+    output WE,                          // write enable
+    input IRQ,                          // interrupt request
+    input NMI,                          // non-maskable interrupt request
+    input RDY,                          // Ready signal. Pauses CPU when RDY=0
+    input debug );                      // debug for simulation
 
 wire [7:0] ADH;                         // address bus high
 wire [7:0] ADL;                         // address bus low 
@@ -59,10 +59,9 @@ wire mask_irq;                          // indicates whether IRQs are masked
 /*
  * Flags and flag updates
  */
-//wire sync;                              // start of new instruction
 wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
-wire B;					// BRK flag
+wire B;                                 // BRK flag
 wire [7:0] P;                           // processor status flags
 wire D = P[3];                          // take out D for controller 
 
