@@ -16,13 +16,13 @@ initial begin
     regs[1]  = 3;                       // Y register 
     regs[2]  = 8'h41;                   // A register
     regs[3]  = 8'hff;                   // S register
-    regs[4]  = 8'hfe;                   // IRQ/BRK vector
+    regs[4]  = 8'hfe;                   // obsolete
     regs[5]  = 8'h01;                   // for INC
     regs[6]  = 8'hff;                   // for DEC
     regs[7]  = 8'h00;                   // Z register, always zero
-    regs[8]  = 8'hfa;                   // NMI
-    regs[9]  = 8'hfc;                   // RST
-    regs[10] = 8'hfe;                   // BRK
+    regs[8]  = 8'hf9;                   // NMI - 1
+    regs[9]  = 8'hfb;                   // RST - 1
+    regs[10] = 8'hfd;                   // BRK - 1
 end
 
 wire [4:0] reg_wr = {3'b000, op[5:4] }; 
