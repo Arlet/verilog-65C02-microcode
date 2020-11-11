@@ -190,9 +190,9 @@ wire plp = flags[2];
 
 /*
  * the alu_co_1 signal is the ALU carry out, delayed
- * by one cycle. This is because in RMW instructions
- * such as ROL, we do an instruction fetch before 
- * setting the flags, which changes the alu_co.
+ * by one cycle. This is because the BCD instructions
+ * can generate a carry in the main cycle or the adjust
+ * cycle.
  */
 reg alu_co_1; 
 
@@ -201,11 +201,10 @@ always @(posedge clk)
 
 always @(posedge clk)
     if( sync )
-        casez( {plp, flags[1:0]} )
-            3'b001 : C <= alu_co_1;             // delayed ALU carry out 
-            3'b010 : C <= alu_co_1 | alu_co;    // BCD carry
-            3'b011 : C <= alu_co;               // ALU carry out
-            3'b10? : C <= M[0];                 // PLP
+        casez( flags[1:0] )
+            2'b01 : C <= alu_co_1;          // delayed carry (not usd)
+            2'b10 : C <= alu_co | alu_co_1; // BCD carry
+            2'b11 : C <= alu_co;            // ALU carry out 
         endcase
 
 /*
@@ -227,22 +226,14 @@ always @(posedge clk)
             2'b11 : N <= alu_out[7];   // ALU N flag 
         endcase
 
-reg z_tsb_trb;
-
-always @(posedge clk)
-    z_tsb_trb <= ~|(R & M);
-
 /*
  * update Z(ero) flag
  */
 always @(posedge clk)
     if( sync )
-        if( flags[9] )
-            $display( "flag Z %b", z_tsb_trb );
-        else casez( flags[4:3] )
-            2'b01 : Z <= ~|(R & M);    // BIT  
-            2'b10 : Z <= M[1];         // PLP
-            2'b11 : Z <= ~|alu_out;    // ALU == 0 
+        casez( {flags[9], flags[2]} )
+            2'b01 : Z <= M[1];         // PLP
+            2'b10 : Z <= ~|alu_out;    // ALU == 0 
         endcase
 
 /*
@@ -278,7 +269,7 @@ always @(posedge clk)
     if( sync )
         casez( {plp, flags[6:5]} )
             3'b010 : D <= M[5];         // CLD/SED 
-          //3'b011 : D <= 0;            // clear D in BRK
+            3'b011 : D <= 0;            // clear D in BRK
             3'b1?0 : D <= M[3];         // PLP
         endcase
 
@@ -420,7 +411,7 @@ wire [7:0] A = regfile.regs[2];
 wire [7:0] S = regfile.regs[3];
 
 always @( posedge clk ) begin
-      if( !debug || cycle[10:0] == 0 )
+      if( !debug || cycle < 150000 || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
       $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h ADJ:%b%b S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
         cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
