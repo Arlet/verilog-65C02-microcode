@@ -9,6 +9,7 @@ module cpu(
     input clk,              			// CPU clock
     input RST,              			// RST signal
     output [15:0] AD,       			// address bus (combinatorial) 
+    output sync,                        // start of new instruction
     input [7:0] DI,         			// data bus input
     output reg [7:0] DO,    			// data bus output 
     output WE,              			// write enable
@@ -58,7 +59,7 @@ wire mask_irq;                          // indicates whether IRQs are masked
 /*
  * Flags and flag updates
  */
-wire sync;                              // start of new instruction
+//wire sync;                              // start of new instruction
 wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
 wire B;					// BRK flag

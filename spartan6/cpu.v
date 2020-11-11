@@ -8,6 +8,7 @@
 module cpu( 
     input clk,              			// CPU clock
     input RST,              			// RST signal
+    output sync,                        // sync signal
     output [15:0] AD,       			// address bus (combinatorial) 
     input [7:0] DI,         			// data bus input
     output reg [7:0] DO,    			// data bus output 
@@ -38,7 +39,7 @@ wire inc_pc = ab_op[11];                // set if PC needs increment
 wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[10];                 // load enable for PC 
 wire ld_ahl = ab_op[9];                 // load enable for AHL
-wire [3:0] abh_op = ab_op[9:5];         // ABH operation
+wire [3:0] abh_op = ab_op[8:5];         // ABH operation
 wire [3:0] abl_op = ab_op[4:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
 wire abl_co;                            // ABL carry out
@@ -58,9 +59,10 @@ wire mask_irq;                          // indicates whether IRQs are masked
 /*
  * Flags and flag updates
  */
-wire sync;                              // start of new instruction
+//wire sync;                              // start of new instruction
 wire [9:0] flag_op;                     // flag operation select bits
 wire cond;                              // condition code
+wire B;					// BRK flag
 wire [7:0] P;                           // processor status flags
 wire D = P[3];                          // take out D for controller 
 
@@ -283,7 +285,6 @@ wire [7:0] Q_ = IRQ ? "I" : "-";
 wire [7:0] W_ = RDY ? "-" : "W";
 
 integer cycle;
-integer hang;
 
 always @( posedge clk )
     cycle <= cycle + 1;
@@ -293,27 +294,13 @@ wire [7:0] Y = regfile.Y;
 wire [7:0] A = regfile.A;
 wire [7:0] S = regfile.S;
 
-always @( posedge clk )
-    if( sync )
-        if( |flag_op )
-            hang <= 0;
-        else
-            hang <= hang + 1;
-
-/*
-always @(*)
-    if( hang > 20 )
-        $finish;
-*/
-
-
 always @( posedge clk ) begin
-      if( !debug || cycle[10:0] == 0 )
-      $display( "%4d %s%s%s %b.%3H LD:%b OP:%b AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, W_, R_, Q_, ctl.control[21:20],  ctl.pc,  
-       ld_m, abl.op, 
-       AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu.CO, 
-       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond , sync ? flag_op : 8'h0 );
+      if( !debug || cycle < 150000 || cycle[10:0] == 0 )
+      //if( !debug || cycle > 77600000 )
+      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
+       abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu.CO, 
+       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end
