@@ -25,8 +25,7 @@ module alu(
     output mask_irq,        // one cycle early I flag notification 
     output [7:0] P,         // flags register
     output cond,            // condition code 
-    output [7:0] OUT,       // data out
-    output CO               // carry out
+    output [7:0] OUT        // data out
 );
 
 wire [7:0] M;
