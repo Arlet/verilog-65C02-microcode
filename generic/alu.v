@@ -112,16 +112,25 @@ wire BC4 = adder[4] ^ R[4] ^ M[4];
 wire BC7 = adder[7] ^ R[7] ^ M[7];
 wire BC8 = SBC ^ adder[8];
 
-/*
- * overflow
- */
-//assign V = BC7 ^ BC8;
-
 /* 
  * BCD adjust for each of the 2 nibbles
  */
 assign adjl = BC4 | adder[3:1] >= 5;
 assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
+
+/*
+ * partial zero flag signals. The z0 signal checks the middle 6 bits, the
+ * z1 signal checks the outer 2 bits.
+ */
+wire z0 = ~|adder[6:1];
+reg z1;
+
+always @(*)
+    casez( op[6:5] )
+        2'b0?:  z1 = ~(adder[0] | adder[7]);
+        2'b10:  z1 = ~(SI | adder[0]);
+        2'b11:  z1 = ~(SI | adder[7]);
+    endcase
 
 /*
  * 2nd stage takes previous result, and
@@ -213,8 +222,8 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( {flag_op[9], flag_op[2]} )
-            2'b01 : Z <= M[1];         // PLP
-            2'b10 : Z <= ~|OUT;        // ALU == 0 
+            2'b01 : Z <= M[1];          // PLP
+            2'b10 : Z <= z0 & z1;       // ALU == 0 
         endcase
 
 /*
@@ -224,8 +233,8 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         case( flag_op[8:7] )
-            2'b01 : V <= BC7 ^ BC8;
-            2'b11 : V <= M[6];        // BIT/PLP
+            2'b01 : V <= BC7 ^ BC8;     // ALU overflow 
+            2'b11 : V <= M[6];          // BIT/PLP
         endcase
 
 /*
