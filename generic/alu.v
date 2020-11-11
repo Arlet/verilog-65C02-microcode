@@ -193,8 +193,8 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( flag_op[1:0] )
-            2'b01 : C <= CO1;               // delayed carry (not usd)
-            2'b10 : C <= CO | CO1;          // BCD carry
+            2'b01 : C <= CO1;               // delayed carry for SBC
+            2'b10 : C <= CO | CO1;          // BCD carry for ADC
             2'b11 : C <= CO;                // ALU carry out 
         endcase
 
@@ -277,21 +277,29 @@ always @(posedge clk)
             3'b1?0 : D <= M[3];         // PLP
         endcase
 
+
 /*
  * branch condition. 
  */
+reg flag_set;
+
 always @(*)
-    if( M[0] | M[1] | M[2] )  cond = 1;      // non-conditional instructions
-    else casez( M[7:4] )
-        4'b000?:        cond = ~N;     // BPL
-        4'b001?:        cond = N;      // BMI
-        4'b010?:        cond = ~V;     // BVC
-        4'b011?:        cond = V;      // BVS
-        4'b1000:        cond = 1;      // BRA
-        4'b100?:        cond = ~C;     // BCC
-        4'b101?:        cond = C;      // BCS
-        4'b110?:        cond = ~Z;     // BNE
-        4'b111?:        cond = Z;      // BEQ
+    case( M[7:6] )
+        2'b00:  flag_set = N;                   // BPL or BMI
+        2'b01:  flag_set = V;                   // BVC or BVS
+        2'b10:  flag_set = C;                   // BCC or BCS
+        2'b11:  flag_set = Z;                   // BNE or BEQ
     endcase
+
+/*
+ * only odd column 0 has conditional instructions, the rest 
+ * is unconditional
+ */
+wire uncond = ~M[4] | M[3] | M[2] | M[1] | M[0];
+
+always @(*)
+    if( uncond )        cond = 1;               // unconditional instruction
+    else if( M[5] )     cond = flag_set;        // BMI, BVS, BCS, BEQ
+    else                cond = ~flag_set;       // BPL, BVC, BCC, BNE
 
 endmodule
