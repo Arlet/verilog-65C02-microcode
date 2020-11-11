@@ -1,7 +1,7 @@
 /*
  * generate control signals for 65C02 core.
  *
- * This module is organized around a 512x36 bit memory. Half of the
+ * This module is organized around a 512x32 bit memory. Half of the
  * memory is used for instruction decoding. The opcode is used as the
  * address (with top bit set to 0). The output is a control word that
  * controls both address and ALU logic, as well as the register file
@@ -38,8 +38,8 @@
 module ctl(
     input clk,
     input irq,
-    input nmi,
     input rdy,
+    input nmi,
     input reset,
     output sync,
     input cond,

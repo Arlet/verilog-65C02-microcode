@@ -7,8 +7,8 @@
 
 module abl( 
     input clk,
+    input rdy, 
     input CI,               // carry input
-    input rdy,              // RDY input 
     input cond,             // condition code input
     output reg CO,          // carry output
     input [7:0] DB,         // Data Bus 
@@ -19,11 +19,11 @@ module abl(
     input inc_pc,           // indicates whether PCL should be incremented
     output pcl_co,          // Carry out from PCL
     output reg [7:0] PCL,   // Program Counter low
-    output reg [7:0] AHL,   // Address Hold low
     output reg [7:0] ADL    // unregistered version of output
 );
 
 reg [7:0] ABL;
+reg [7:0] AHL;
 
 /*
  * AHL update. The AHL (Address Hold register) is a temporary
