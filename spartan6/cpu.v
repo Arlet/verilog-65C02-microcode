@@ -307,12 +307,14 @@ always @(*)
         $finish;
 */
 
+
 always @( posedge clk ) begin
       if( !debug || cycle[10:0] == 0 )
       $display( "%4d %s%s%s %b.%3H LD:%b OP:%b AD:%h AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, W_, R_, Q_, ctl.control[21:20], ctl.pc,  
-       ld_m, ctl.ab, AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
-       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
+        cycle, W_, R_, Q_, ctl.control[21:20],  ctl.pc,  
+       ld_m, abl.op, 
+       AD, abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu_co, 
+       S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond , sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
         $finish( );
 end
