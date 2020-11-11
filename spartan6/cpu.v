@@ -8,8 +8,8 @@
 module cpu( 
     input clk,                          // CPU clock
     input RST,                          // RST signal
-    output sync,                        // sync signal
     output [15:0] AD,                   // address bus (combinatorial) 
+    output sync,                        // start of new instruction
     input [7:0] DI,                     // data bus input
     output reg [7:0] DO,                // data bus output 
     output WE,                          // write enable
@@ -280,7 +280,7 @@ wire [7:0] N_ = alu.N ? "N" : "-";
 wire [7:0] V_ = alu.V ? "V" : "-";
 wire [7:0] Z_ = alu.Z ? "Z" : "-";
 wire [7:0] R_ = RST ? "R" : "-";
-wire [7:0] Q_ = IRQ ? "I" : "-";
+wire [7:0] Q_ = NMI ? "N" : IRQ ? "I" : "-";
 wire [7:0] W_ = RDY ? "-" : "W";
 
 integer cycle;
@@ -296,8 +296,8 @@ wire [7:0] S = regfile.S;
 always @( posedge clk ) begin
       if( !debug || cycle < 150000 || cycle[10:0] == 0 )
       //if( !debug || cycle > 77600000 )
-      $display( "%4d %s%s %b.%3H AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
-        cycle, R_, Q_, ctl.control[21:20], ctl.pc,  
+      $display( "%4d %s%s %b.%3H OP:%b AB:%h%h DB:%h AH:%h DO:%h PC:%h%h IR:%h SYNC:%b %s WE:%d R:%h M:%h ALU:%h CO:%h S:%02x A:%h X:%h Y:%h P:%s%s%s%s%s%s %d F:%b",
+        cycle, R_, Q_, ctl.control[21:20], ctl.pc, ctl.ab_mode,
        abh.ABH, abl.ABL, DB, abl.AHL,  DO, PCH, PCL, IR, sync, opcode, WE, R, alu.M, alu_out, alu.CO, 
        S, A, X, Y,  C_, D_, I_, N_, V_, Z_, cond, sync ? flag_op : 8'h0 );
       if( sync && IR == 8'hdb )
