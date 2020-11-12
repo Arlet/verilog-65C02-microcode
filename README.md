@@ -24,13 +24,15 @@ The main design goal is to minimize the slice count.  The first version uses a b
 for microcode. 
 
 ## Code
-Code is not complete. This is a work in progress. 
+Code is complete. 
 
 * cpu.v module is the top level. 
 * alu.v implements the ALU
 * abl.v implements the lower 8 bits of the address bus.
 * abh.v implements the upper 8 bits of the address bus.
 * ctl.v does the instruction decoding and generation of all control signals.
+* regfile.v has the register file.
+* microcode.v implements a 512x32 bit ROM with the microcode.
 
 The Spartan6 directory uses Xilinx Spartan-6 specific instantiations. The generic directory has plain verilog that should run on any FPGA.
 
@@ -39,16 +41,14 @@ Code has been tested with Verilator.
 ## Status
 
 * All CMOS/NMOS 6502 instructions added (except for NOPs as undefined, Rockwell/WDC extensions)
-* Model passes Klaus Dormann's test suite for 6502/65C02 (with BCD disabled)
-* RST, IRQ, RDY implemented.
-* NMI not yet implemented.
+* Model passes Klaus Dormann's test suite for 6502/65C02 (with BCD enabled)
+* SYNC, RST, IRQ, RDY, NMI implemented.
 * BCD support implemented using additional cycle. N/C/Z flags updated, V flag unaffected.
 
 ### Cycle counts
 For purpose of minimizing design, I did not keep the original cycle
-count. Most of the so-called dead cycles have been removed. In some cases,
-this was too complicated, most notably when doing the implied push/pull
-instructions, such as PHA and PLA.
+count. Most of the so-called dead cycles have been removed, except for
+one cycle in the PHx/PLx instructions, where this would have been too messy.
 
 | Instruction type | Cycles |
 | :--------------: | :----: |
