@@ -83,23 +83,42 @@ microcode rom(
 assign do_op = control[30:29];
 
 /*
- * sync indicates when new instruction is decoded
+ * The NMI signal is edge sensitive. Detect edge,
+ * register it in 'take_nmi', and clear it at 
+ * the next sync pulse, when the NMI is actually
+ * taken.
  */
-assign sync = (control[23:22] == 2'b00);
+reg nmi1;
+reg take_nmi;
+
+always @(posedge clk)
+    nmi1 <= nmi;
+
+always @(posedge clk)
+    if( nmi & ~nmi1 )
+        take_nmi <= 1;
+    else if( sync )
+        take_nmi <= 0;
+
+/*
+ * take irq when 'irq' is present and not disabled.
+ * (priority of irq/nmi will be decided in 'sel_pc' mux)
+ */
+wire take_irq = irq & ~I;
 
 /*
  * The microcontrol 'program counter'.
  *
  * The bits in control[23:22] tell what to do:
  *
- * when 00 -> decode next instruction, form address in bottom 256 words.
+ * when 00 -> sync: decode next instruction, form address in bottom 256 words.
  *            or jump to IRQ/NMI handler if necessary.
  * when 01 -> jump to next microcode instruction in area 9'h100-9'h17F
  * when 10 -> jump to finishing code in area 9'h140-9'h15F.
  * when 11 -> jump to next, but also save pointer to finishing code
  */
 
-wire take_irq = irq & ~I;
+assign sync = (control[23:22] == 2'b00);
 
 /*
  * First, form a 2 bit select signal from the interrupt signals
@@ -115,12 +134,12 @@ wire take_irq = irq & ~I;
 reg [1:0] sel_pc;
 
 always @(*)
-    casez( {nmi, take_irq, control[23:22]} )
+    casez( {take_nmi, take_irq, control[23:22]} )
+        4'b???1:    sel_pc = 2'b01;                 // next
+        4'b??10:    sel_pc = 2'b10;                 // finish 
         4'b1?00:    sel_pc = 2'b11;                 // take NMI
         4'b0100:    sel_pc = 2'b11;                 // take IRQ
-        4'b00?1:    sel_pc = 2'b01;                 // next
         4'b0000:    sel_pc = 2'b00;                 // fetch
-        4'b0010:    sel_pc = 2'b10;                 // finish 
     endcase
 
 /* 
@@ -134,16 +153,15 @@ always @(*)
  *     +---+---+---+---+---+---+---+---+---+
  * 10: | 1 | D | 1   0 |      finish       |   finish handler 
  *     +---+---+---+---+---+---+---+---+---+
- * 11: | 1 |N/I| 1   1   0   0   0   0   0 |   IRQ/NMI handler @160
+ * 11: | 1 |N/I| 1   1   0   0   0   0   0 |   NMI/IRQ handler @160
  *     +---+---+---+---+---+---+---+---+---+
  */
-
 always @(*)
     case( sel_pc )
-        2'b00:      pc = {1'b0, DB};                // look up next instruction at @000-@0FF
-        2'b01:      pc = {1'b1, D, control[6:0]};   // microcode at @100/@180
-        2'b10:      pc = {1'b1, D, 2'b10, finish }; // finish code at @140/@1C0
-        2'b11:      pc = {1'b1, nmi, 7'b1100000 };  // take NMI/IRQ at @1E0/160
+        2'b00:      pc = {1'b0, DB};                    // look up next instruction at @000-@0FF
+        2'b01:      pc = {1'b1, D, control[6:0]};       // microcode at @100/@180
+        2'b10:      pc = {1'b1, D, 2'b10, finish };     // finish code at @140/@1C0
+        2'b11:      pc = {1'b1, take_nmi, 7'b1100000 }; // take NMI/IRQ at @1E0/160
     endcase
 
 /*
@@ -183,17 +201,18 @@ assign B = control[8];
  * of the conditional branches, and the branch direction (DB[7])
  */
 
-wire abl_ci = control[26];
-wire [1:0] abl_sel = control[25:24];
+wire [3:0] ab = control[27:24];
+wire abl_ci = ab[2];
+wire [1:0] abl_sel = ab[1:0];
 wire back = cond & DB[7];     // doing backwards branch 
 
 always @(*)
-    case( control[27:24] )    //             IPH_ABH____________ABL OP
+    case( ab )                //             IPH_ABH____________ABL OP
         4'b0000:                ab_op = { 7'b001_0110, abl_sel, 2'b11, abl_ci };  // AB + 0
         4'b0001:                ab_op = { 7'b000_1010, abl_sel, 2'b10, abl_ci };  // PC
         4'b0010:                ab_op = { 7'b111_1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG}, store PC
         4'b0011:                ab_op = { 7'b111_0000, abl_sel, 2'b01, abl_ci };  // {00, DB+REG}
-        4'b0100:                ab_op = { 7'b001_0110, abl_sel, 2'b11, abl_ci };  // AB + 1
+        4'b0100:                ab_op = { 7'b011_0110, abl_sel, 2'b11, abl_ci };  // AB + 1, store PC
         4'b0101:                ab_op = { 7'b011_0001, abl_sel, 2'b00, abl_ci };  // {01, SP+1}
         4'b0111: if( back )     ab_op = { 7'b011_0111, abl_sel, 2'b11, abl_ci };  // {AB-1, AB} + DB + 1
                  else           ab_op = { 7'b011_0110, abl_sel, 2'b11, abl_ci };  // AB + 1
@@ -203,7 +222,7 @@ always @(*)
         4'b1011:                ab_op = { 7'b010_0001, abl_sel, 2'b00, abl_ci };  // {01, SP}
         4'b1100:                ab_op = { 7'b001_0110, abl_sel, 2'b11, abl_ci };  // AB+1, keep PC
         4'b1111:                ab_op = { 7'b000_0011, abl_sel, 2'b00, abl_ci };  // {FF, REG} + 1
-        default:                ab_op = { 7'bxxx_xxxx, abl_sel, 2'bxx, abl_ci };
+        default:                ab_op = { 7'bxxx_xxxx, abl_sel, 2'bxx, abl_ci };  // avoid latches
     endcase
 
 endmodule
