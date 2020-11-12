@@ -60,13 +60,14 @@ always @(*)
  * register the new value
  */
 always @(posedge clk)
-    ABH <= ADH;
+    if( rdy )
+        ABH <= ADH;
 
 /*
  * update Program Counter High
  */
 always @(posedge clk)
-    if( ld_pc )
+    if( ld_pc & rdy )
         PCH <= ABH + inc_pc;
 
 endmodule

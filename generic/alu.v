@@ -22,7 +22,7 @@ module alu(
     output mask_irq,        // one cycle early I flag notification 
     output [7:0] P,         // flags register
     output reg cond,        // condition code 
-    output [7:0] OUT        // data out
+    output reg [7:0] OUT    // data out
 );
 
 reg CO, CO1;
@@ -165,14 +165,14 @@ wire l = adjl;
 wire h = adjh;
 
 always @(posedge clk)
-    if( ld_m )
+    if( ld_m & rdy )
         M <= DB;
 
 /*
  * BI (B Input of the ALU) register update
  */
 always @(posedge clk)
-    if( ld_m )
+    if( ld_m & rdy )
         BI <= adj_m ? {1'b0, h, h, 2'b0, l, l, 1'b0 } : DB;
 
 /*
@@ -188,10 +188,11 @@ wire plp = flag_op[2];
  */
 
 always @(posedge clk)
-    CO1 <= CO;
+    if( rdy )
+        CO1 <= CO;
 
 always @(posedge clk)
-    if( sync )
+    if( sync & rdy )
         casez( flag_op[1:0] )
             2'b01 : C <= CO1;               // delayed carry for SBC
             2'b10 : C <= CO | CO1;          // BCD carry for ADC
@@ -209,7 +210,7 @@ always @(posedge clk)
  * 11 - N/Z <= alu_out
  */
 always @(posedge clk)
-    if( sync )
+    if( sync & rdy )
         casez( flag_op[4:3] )
             2'b01 : N <= M[7];          // BIT (bit 7) 
             2'b10 : N <= M[7];          // PLP
@@ -220,7 +221,7 @@ always @(posedge clk)
  * update Z(ero) flag
  */
 always @(posedge clk)
-    if( sync )
+    if( sync & rdy )
         casez( {flag_op[9], flag_op[2]} )
             2'b01 : Z <= M[1];          // PLP
             2'b10 : Z <= z0 & z1;       // ALU == 0 
@@ -231,7 +232,7 @@ always @(posedge clk)
  *
  */
 always @(posedge clk)
-    if( sync )
+    if( sync & rdy )
         case( flag_op[8:7] )
             2'b01 : V <= BC7 ^ BC8;     // ALU overflow 
             2'b11 : V <= M[6];          // BIT/PLP
@@ -267,10 +268,11 @@ always @(*) begin
 end
 
 always @(posedge clk)
-    I <= next_I;
+    if( rdy )
+        I <= next_I;
 
 always @(posedge clk)
-    if( sync )
+    if( sync & rdy )
         casez( {plp, flag_op[6:5]} )
             3'b010 : D <= M[5];         // CLD/SED 
             3'b011 : D <= 0;            // clear D in BRK

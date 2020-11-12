@@ -179,7 +179,7 @@ ctl ctl(
 reg [7:0] IR;
 
 always @(posedge clk)
-    if( sync )
+    if( sync & RDY )
         IR <= DB;
 
 reg [23:0] opcode;

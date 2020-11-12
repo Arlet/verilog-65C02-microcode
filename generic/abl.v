@@ -35,7 +35,7 @@ reg [7:0] AHL;
  * PC to the stack, and then fetches 2nd operand byte.
  */
 always @(posedge clk)
-    if( ld_ahl )
+    if( ld_ahl & rdy )
         AHL <= DB;
 
 /*
@@ -89,7 +89,8 @@ always @(*)
     endcase
 
 always @(posedge clk)
-	ABL <= ADL;
+    if( rdy )
+        ABL <= ADL;
 
 /*
  * update PCL (program counter low)
@@ -99,7 +100,7 @@ wire [8:0] PCL1 = ABL + inc_pc;
 assign pcl_co = PCL1[8];
 
 always @(posedge clk)
-    if( ld_pc )
+    if( ld_pc & rdy )
         PCL <= PCL1;
 
 endmodule

@@ -72,7 +72,7 @@ reg [4:0] finish;   // finishing code
 
 microcode rom(
     .clk(clk),
-    .enable(1'b1),
+    .enable(rdy),
     .reset(reset),
     .addr(pc),
     .data(control) );
@@ -97,7 +97,7 @@ always @(posedge clk)
 always @(posedge clk)
     if( nmi & ~nmi1 )
         take_nmi <= 1;
-    else if( sync )
+    else if( sync & rdy )
         take_nmi <= 0;
 
 /*
@@ -168,14 +168,15 @@ always @(*)
  * bit 28 contains WE signal for next cycle
  */
 always @(posedge clk)
-    WE <= control[28];
+    if( rdy )
+        WE <= control[28];
 
 /*
  * if bit 23 is set, the ALU is not needed in this cycle
  * so the same bits are used to store location of finisher code
  */
 always @(posedge clk)
-    if( control[23] )
+    if( rdy & control[23] )
         finish <= control[14:10];
 
 /*

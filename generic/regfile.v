@@ -43,7 +43,7 @@ wire we = op[6];
  * registers always comes from the ALU output.
  */
 always @(posedge clk)
-    if( we )
+    if( we & rdy )
         regs[reg_wr] <= DI;
 
 endmodule
