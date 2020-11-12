@@ -85,12 +85,33 @@ microcode rom(
     .addr(pc),
     .data(control) );
 
+wire nmi1;          // delayed nmi signal
+wire take_irq;
+wire take_nmi;
+wire take_nmi_d;
+
+reg nmi2;
+
+always @(posedge clk)
+    nmi2 <= nmi;
+
 /*
  * sync indicates when new instruction is decoded
  *
  * sync = ~control[23] & ~control[22] & rdy;
  */
 LUT3 #(.INIT(8'b00010000)) lut_sync( .O(sync), .I0(control[22]), .I1(control[23]), .I2(rdy) );
+
+/*
+ * nmi logic
+ */
+FDRE ff_nmi1( .C(clk), .CE(1'b1), .R(1'b0), .D(nmi), .Q(nmi1) );
+
+/*
+ * take_nmi_d = !sync & (take_nmi | (!nmi1 & nmi))
+ */
+LUT4 #(.INIT(16'h0f22)) lut_take_nmi( .O(take_nmi_d), .I0(nmi), .I1(nmi1), .I2(sync), .I3(take_nmi) );
+FDRE ff_take_nmi( .C(clk), .CE(1'b1), .R(1'b0), .D(take_nmi_d), .Q(take_nmi) );
 
 /*
  * The microcontrol 'program counter'.
@@ -136,17 +157,18 @@ wire [1:0] sel_pc;
 /*
  * address select for microcode ROM
  */
-LUT4 #(.INIT(16'h5554)) lut_sel1( .O(sel_pc[1]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi) );
-LUT4 #(.INIT(16'hbbba)) lut_sel0( .O(sel_pc[0]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(nmi) );
+LUT4 #(.INIT(16'h5554)) lut_sel1( .O(sel_pc[1]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(take_nmi) );
+LUT4 #(.INIT(16'hbbba)) lut_sel0( .O(sel_pc[0]), .I0(control[22]), .I1(control[23]), .I2(take_irq), .I3(take_nmi) );
 
 wire [6:0] N = control[6:0];
 wire [4:0] F = finish_q;
+wire N_I = take_nmi;
 
 /*
  * address mux
  */
 LUT2 #(.INIT(4'b1110))      pc8( .O(pc[8]),                                   .I0(sel_pc[0]), .I1(sel_pc[1]) );
-LUT5 #(.INIT(32'hf0ccccaa)) pc7( .O(pc[7]), .I0(DB[7]), .I1(D),    .I2(nmi),  .I3(sel_pc[0]), .I4(sel_pc[1]) );
+LUT5 #(.INIT(32'hf0ccccaa)) pc7( .O(pc[7]), .I0(DB[7]), .I1(D),    .I2(N_I),  .I3(sel_pc[0]), .I4(sel_pc[1]) );
 LUT4 #(.INIT(16'hffca))     pc6( .O(pc[6]), .I0(DB[6]), .I1(N[6]),            .I2(sel_pc[0]), .I3(sel_pc[1]) );
 LUT4 #(.INIT(16'hf0ca))     pc5( .O(pc[5]), .I0(DB[5]), .I1(N[5]),            .I2(sel_pc[0]), .I3(sel_pc[1]) );
 LUT5 #(.INIT(32'h00f0ccaa)) pc4( .O(pc[4]), .I0(DB[4]), .I1(N[4]), .I2(F[4]), .I3(sel_pc[0]), .I4(sel_pc[1]) );
