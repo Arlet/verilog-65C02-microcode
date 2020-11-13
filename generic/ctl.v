@@ -46,7 +46,7 @@ module ctl(
     input [7:0] DB,
     output reg WE,
     output [9:0] flag_op,
-    output [6:0] alu_op,
+    output [8:0] alu_op,
     output [6:0] reg_op,
     output [1:0] do_op,
     output ld_m,
@@ -55,19 +55,14 @@ module ctl(
     output B,
     output reg [11:0] ab_op );
 
-wire [2:0] adder;
-wire [1:0] shift;
-wire [1:0] ci;
-wire [3:0] src;
-wire [2:0] dst;
+wire [31:0] control;
 
-assign ld_m = control[31] & rdy;
+assign do_op = control[30:29];
 assign flag_op = {control[30:29], control[7:0]};
-assign alu_op = { shift, adder, ci };
+assign alu_op = {control[31:30], control[14:8]};
 assign reg_op = control[21:15];
 
 reg [8:0] pc;
-wire [31:0] control;
 reg [4:0] finish;   // finishing code
 
 microcode rom(
@@ -76,11 +71,6 @@ microcode rom(
     .reset(reset),
     .addr(pc),
     .data(control) );
-
-/*
- * operation for DO (data out)
- */
-assign do_op = control[30:29];
 
 /*
  * The NMI signal is edge sensitive. Detect edge,
@@ -178,13 +168,6 @@ always @(posedge clk)
 always @(posedge clk)
     if( rdy & control[23] )
         finish <= control[14:10];
-
-/*
- * control bits for ALU
- */
-assign shift = control[14:13];
-assign adder = control[12:10];
-assign ci    = control[9:8];
 
 /*
  * take B from CI control bits. We only care about the 'B'

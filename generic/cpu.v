@@ -46,14 +46,12 @@ wire abl_co;                            // ABL carry out
 wire abh_ci = abl_co;
 
 wire [1:0] do_op;                       // select for Data Output
-wire adj_m = do_op[1];                  // use M for BCD adjust
 
 /* 
  * ALU Signals
  */
-wire [6:0] alu_op;                      // ALU operation
+wire [8:0] alu_op;                      // ALU operation
 wire [7:0] alu_out;                     // ALU output
-wire ld_m;                              // load M register
 wire mask_irq;                          // indicates whether IRQs are masked
 
 /*
@@ -144,8 +142,6 @@ alu alu(
     .mask_irq(mask_irq),
     .flag_op(flag_op),
     .cond(cond),
-    .ld_m(ld_m),
-    .adj_m(adj_m),
     .OUT(alu_out) );
 
 /*
@@ -164,7 +160,6 @@ ctl ctl(
     .reg_op(reg_op),
     .ab_op(ab_op),
     .do_op(do_op),
-    .ld_m(ld_m),
     .I(mask_irq),
     .D(D),
     .B(B),

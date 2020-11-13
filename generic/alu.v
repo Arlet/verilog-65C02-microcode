@@ -14,10 +14,8 @@ module alu(
     input sync,             // opcode sync
     input [7:0] R,          // input from register file
     input [7:0] DB,         // data bus
-    input [6:0] op,         // 7-bit operation select
+    input [8:0] op,         // 9-bit operation select
     input [9:0] flag_op,    // 10-bit flag operation select
-    input ld_m,             // load enable for M
-    input adj_m,            // load BCD adjustment
     input B,                // BRK flag
     output mask_irq,        // one cycle early I flag notification 
     output [7:0] P,         // flags register
@@ -31,6 +29,9 @@ assign P = { N, V, 1'b1, B, D, I, Z, C };
 
 reg [7:0] M;
 reg CI, SI;
+
+wire ld_m = op[8];
+wire adj_m = op[7];
 
 /*
  * ALU carry in and shift in
