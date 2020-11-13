@@ -109,8 +109,8 @@ wire SBC = op[4];
  * intermediate borrow/carry bits. The number indicates 
  * which bit position the borrow or carry goes into.
  */
-wire BC4 = adder[4] ^ R[4] ^ M[4];
-wire BC7 = adder[7] ^ R[7] ^ M[7];
+wire BC4 = adder[4] ^ AI[4] ^ BI[4];
+wire BC7 = adder[7] ^ AI[7] ^ BI[7];
 wire BC8 = SBC ^ adder[8];
 
 /* 
