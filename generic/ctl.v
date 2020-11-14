@@ -176,22 +176,53 @@ always @(posedge clk)
  */
 assign B = control[8];
 
+wire [3:0] mode = control[27:24];
+
 /*
- * The ABL/ABH modules need 12 bits of control signals, but only in a limited
- * number of total options.
+ * The 4 'mode' bits control the AB datapath. The AB datapath (ABL+ABH) 
+ * require a total of 12 control signals, but there are only 15 unique
+ * and useful combinations, listed in the table below.
  *
- * In order to compress those in the control word, the code below expands
- * the 4 control bits into 12, optionally taking into account the output
- * of the conditional branches, and the branch direction (DB[7])
+ * The "PC" (consisting of PCH and PCL) is not really the "Program Counter"
+ * but simply a holding register for when AB needs to access data. It can
+ * either keep the old value, or load it with AB, optionally incremented.
+ *
+ * The "AHL" is the hold register that stores DB for the next cycle, to be
+ * used whenever a 16 bit address appears on the bus. 
+ *
+ * In case of a branch (mode 0111), the ABL module chooses between DB/00 
+ * offset based on its own condition code inputs. The choice for FF/00 
+ * for ABH is done here.
+ *
+ * mode |   PC   | AHL  | AB
+ * -----+--------+------+------
+ * 0000 |  keep  |  DB  | keep
+ * 0001 |  keep  | keep | PC
+ * 0010 | AB + 1 |  DB  | {DB, AHL + XYZ} 
+ * 0011 | AB + 1 |  DB  | {00, DB  + XYZ} 
+ * 0100 |   AB   |  DB  | AB + 1 
+ * 0101 |   AB   |  DB  | {01, SP  + 1}
+ * 0111 |   AB   |  DB  | AB + { FF, DB } + 1   (if backward branch taken) 
+ * 0111 |   AB   |  DB  | AB + { 00, DB } + 1   (if forward branch taken)
+ * 0111 |   AB   |  DB  | AB + { 00, 00 } + 1   (if branch not taken)
+ * 1000 |  keep  | keep | {01, SP} 
+ * 1001 | AB + 1 |  DB  | {01, SP}
+ * 1010 |  keep  |  DB  | {DB, AHL + XYZ} + 1
+ * 1011 |   AB   | keep | {01, SP}
+ * 1100 |  keep  |  DB  | AB + 1
+ * 1111 |  keep  | keep | { FF, VECTOR } + 1
+ *  |||
+ *  |++----> mode bits [1:0] go directly into ABL mux selection
+ *  |
+ *  +------> mode bit [2] goes directly into ABL carry input
  */
 
-wire [3:0] ab = control[27:24];
-wire abl_ci = ab[2];
-wire [1:0] abl_sel = ab[1:0];
+wire abl_ci = mode[2];
+wire [1:0] abl_sel = mode[1:0];
 wire back = cond & DB[7];     // doing backwards branch 
 
 always @(*)
-    case( ab )                //             IPH_ABH____________ABL OP
+    case( mode )              //             IPH_ABH____________ABL OP
         4'b0000:                ab_op = { 7'b001_0110, abl_sel, 2'b11, abl_ci };  // AB + 0
         4'b0001:                ab_op = { 7'b000_1010, abl_sel, 2'b10, abl_ci };  // PC
         4'b0010:                ab_op = { 7'b111_1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG}, store PC
