@@ -14,6 +14,22 @@ you should register the "AD" signals on the IO block as follows: ("AB" are the p
         if( RDY )
             AB <= AD;
 
+When using synchronous memories, you need a separate read and write port ("Simple Dual Ported"), and use the AD signal for reading
+(produce DI at the next cycle), and use AB for writing. Like this:
+
+    always @(posedge clk)
+        if( WE & RDY )
+            mem[AB] <= DO;
+
+    always @(posedge clk)
+        if( RDY )
+            DI <= mem[AD]
+
+When using asynchronous memories, you just use AB for both reading and writing, and combine DI/DO on the data bus:
+
+    assign DB = WE ? DO : 8'hZZ;
+    assign DI = DB;
+
 When using the RDY signal, please note that the unregistered 'AD' outputs are not guaranteed to be stable while RDY=0. For example, 
 during a zeropage access, the DB input is fed back directly on the AD output. If you're deasserting RDY in your design, you must either
 use the registered 'AB' that use the RDY as clock enable, shown above, or you must read the AD output only on the first cycle of RDY=0, 
