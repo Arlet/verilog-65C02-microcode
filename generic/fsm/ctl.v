@@ -422,7 +422,7 @@ always @(posedge clk)
              8'h41: control <= 20'bxx0_00_010_00_1_10_0010; // EOR (ZP,X)
              8'h45: control <= 20'bx00_00_010_00_1_10_0010; // EOR ZP
              8'h46: control <= 20'bx10_11_000_00_0_xx_0111; // LSR ZP
-             8'h48: control <= 20'bxx0_00_000_00_0_xx_0010; // PHA
+             8'h48: control <= 20'bxx0_00_100_00_0_xx_0010; // PHA
              8'h49: control <= 20'bxx0_00_010_00_1_10_0010; // EOR #IMM
              8'h4A: control <= 20'bx00_11_000_00_1_10_0010; // LSR A
              8'h4C: control <= 20'b1x0_xx_xxx_xx_0_xx_xxxx; // JMP
@@ -435,7 +435,7 @@ always @(posedge clk)
              8'h56: control <= 20'bx10_11_000_00_0_xx_0111; // LSR ZP,X
              8'h58: control <= 20'bxx0_00_000_00_0_xx_xxxx; // CLI
              8'h59: control <= 20'b000_00_010_00_1_10_0010; // EOR ABS,Y
-             8'h5A: control <= 20'bxx0_00_000_00_0_xx_0001; // PHY
+             8'h5A: control <= 20'bxx0_00_100_00_0_xx_0001; // PHY
              8'h5D: control <= 20'b000_00_010_00_1_10_0010; // EOR ABS,X
              8'h5E: control <= 20'b010_11_000_00_0_xx_0111; // LSR ABS,X
              8'h60: control <= 20'b1x0_xx_xxx_xx_0_xx_xxxx; // RTS
@@ -526,7 +526,7 @@ always @(posedge clk)
              8'hD6: control <= 20'bx10_00_011_00_0_xx_0110; // DEC ZP,X
              8'hD8: control <= 20'bxx0_xx_xxx_xx_0_xx_xxxx; // CLD
              8'hD9: control <= 20'b000_00_110_01_0_xx_0010; // CMP ABS,Y
-             8'hDA: control <= 20'bxx0_00_000_00_0_xx_0000; // PHX
+             8'hDA: control <= 20'bxx0_00_100_00_0_xx_0000; // PHX
              8'hDD: control <= 20'b000_00_110_01_0_xx_0010; // CMP ABS,X
              8'hDE: control <= 20'b010_00_011_00_0_xx_0110; // DEC ABS,X
              8'hE0: control <= 20'bxx0_00_110_01_0_xx_0000; // CPX #IMM
@@ -547,7 +547,7 @@ always @(posedge clk)
              8'hF6: control <= 20'bx10_00_011_00_0_xx_0101; // INC ZP,X
              8'hF8: control <= 20'bxx0_xx_xxx_xx_0_xx_xxxx; // SED
              8'hF9: control <= 20'b000_00_110_11_1_10_0010; // SBC ABS,Y
-             8'hFA: control <= 20'bxx0_00_000_00_0_00_0111; // PLX
+             8'hFA: control <= 20'bxx0_00_000_00_1_00_0111; // PLX
              8'hFD: control <= 20'b000_00_110_11_1_10_0010; // SBC ABS,X
              8'hFE: control <= 20'b010_00_011_00_0_xx_0101; // INC ABS,X
         endcase
@@ -561,9 +561,11 @@ always @(posedge clk)
                 8'h20:  state <= JSR0;      // JSR
                 8'h40:  state <= RTI0;      // RTI
                 8'h60:  state <= RTS0;      // RTS
-                8'h48:  state <= PUSH;      // PUSH
-                8'h68:  state <= PULL;      // PULL
 
+         8'b0?10_1000:  state <= PULL;      // PLA/PLP
+         8'b?111_1010:  state <= PULL;      // PLX/PLY
+         8'b0?00_1000:  state <= PUSH;      // PHA/PHP
+         8'b?101_1010:  state <= PUSH;      // PHY/PHX
          8'b1000_0000:  state <= COND;      // BRA
          8'b???1_0000:  state <= COND;      // other branches
          8'b????_0001:  state <= IND0;      // col 1 (ZP,X)/(ZP),Y
