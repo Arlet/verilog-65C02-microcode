@@ -514,7 +514,7 @@ always @(posedge clk)
          8'b11?0_00?0:  state <= IMM0;      // CPX#/CPY# 
          8'b???0_1001:  state <= IMM0;      // col 9 even 
          8'b???1_1001:  state <= ABS0;      // col 9 odd 
-         8'b????_1???:  state <= ABS0;      // col c,d,e,f
+         8'b????_11??:  state <= ABS0;      // col c,d,e,f
          8'b????_01??:  state <= ZERO;      // col 4,5,6,7
             endcase
         IND0:   state <= IND1;
