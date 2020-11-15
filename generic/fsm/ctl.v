@@ -124,34 +124,32 @@ always @(*)
 parameter
     INIT  = 6'd0,
     SYNC  = 6'd1,
-    BACK  = 6'd2,
-    IMM0  = 6'd3,
-    IND0  = 6'd4,
-    IND1  = 6'd5,
+    IMM0  = 6'd2,
+    IND0  = 6'd3,
+    IND1  = 6'd4,
+    IND2  = 6'd5,
     DATA  = 6'd6,
     ABS0  = 6'd7,
     ABS1  = 6'd8,
     ZERO  = 6'd9,
-    IND2  = 6'd10,
-    PULL  = 6'd11,
-    RDWR  = 6'd12,
-    RTS0  = 6'd13,
-    RTS1  = 6'd14,
-    RTS2  = 6'd15,
-    PUSH  = 6'd16,
-    JSR0  = 6'd17,
-    JSR1  = 6'd18,
-    JSR2  = 6'd19,
-    BRK0  = 6'd20,
-    BRK1  = 6'd21,
-    BRK2  = 6'd22,
-    BRK3  = 6'd23,
-    RTI0  = 6'd24,
-    RTI1  = 6'd25,
-    RTI2  = 6'd26,
-    RTI3  = 6'd27,
-    COND  = 6'd28
-    ;
+    PULL  = 6'd10,
+    RDWR  = 6'd11,
+    RTS0  = 6'd12,
+    RTS1  = 6'd13,
+    RTS2  = 6'd14,
+    PUSH  = 6'd15,
+    JSR0  = 6'd16,
+    JSR1  = 6'd17,
+    JSR2  = 6'd18,
+    BRK0  = 6'd19,
+    BRK1  = 6'd20,
+    BRK2  = 6'd21,
+    BRK3  = 6'd22,
+    RTI0  = 6'd23,
+    RTI1  = 6'd24,
+    RTI2  = 6'd25,
+    RTI3  = 6'd26,
+    COND  = 6'd27;
 
 reg [5:0] state = INIT;
 
@@ -160,7 +158,7 @@ assign sync = (state == SYNC);
 /* 
  * loose state flops
  */
-reg rmw, jmp, ind, add_x, add_y, ld;
+reg rmw, jmp, ind, add_x, add_y, ld, st;
 reg [1:0] dst;
 reg [3:0] src;
 reg [6:0] alu;
@@ -175,6 +173,7 @@ always @(posedge clk)
         BRK2:    WE <= 1;
         JSR0:    WE <= 1;
         JSR1:    WE <= 1;
+        PUSH:    WE <= 1;
         RTS0:    WE <= 0;
         RTS1:    WE <= 0;
         default: WE <= 0;
@@ -195,6 +194,7 @@ always @(*)
         BRK3:   do_op = 2'b01;
         JSR1:   do_op = 2'b11;
         JSR2:   do_op = 2'b10;
+        DATA:   do_op = 2'b00; 
      default:   do_op = 2'bxx;
     endcase
 
@@ -219,6 +219,7 @@ always @(*)
         RTI0:                  reg_op = 7'b1_11_0011; // S
         RTI1:                  reg_op = 7'b1_11_0011; // S
         RTI2:                  reg_op = 7'b1_11_0011; // S
+        PUSH:                  reg_op = 7'b1_11_0011; // S
         PULL:                  reg_op = 7'b1_11_0011; // S
         IND0: if( add_x )      reg_op = 7'b0_00_0000; // X
               else             reg_op = 7'b0_00_0111; // Z
@@ -231,6 +232,7 @@ always @(*)
               else if( add_y ) reg_op = 7'b0_00_0001; // Y
               else             reg_op = 7'b0_00_0111; // Z
         SYNC:                  reg_op = { ld, dst, src }; // dst <= src <op> M
+        DATA:                  reg_op = { 1'b0, dst, src }; // store
      default:                  reg_op = 7'b0_00_0111; // Z
     endcase
 
@@ -255,26 +257,28 @@ always @(*)
  */
 always @(*)
     case( state )
-        BRK0:    alu_op = 9'b00_00_101_00;  // - 1 
-        BRK1:    alu_op = 9'b00_00_101_00;  // - 1 
-        BRK2:    alu_op = 9'b00_00_101_00;  // - 1 
-        JSR0:    alu_op = 9'b00_00_101_00;  // - 1 
-        JSR1:    alu_op = 9'b00_00_101_00;  // - 1 
-        RTS0:    alu_op = 9'b00_00_100_01;  // + 1 
-        RTS1:    alu_op = 9'b00_00_100_01;  // + 1 
-        RTI0:    alu_op = 9'b00_00_100_01;  // + 1
-        RTI1:    alu_op = 9'b00_00_100_01;  // + 1
-        RTI2:    alu_op = 9'b00_00_100_01;  // + 1
-        PULL:    alu_op = 9'b00_00_100_01;  // + 1
-        IMM0:    alu_op = 9'b10_00_000_00;  // load M
-        SYNC:    alu_op = {2'b00, alu };    // perform ALU operation
-        BACK:    alu_op = 9'b10_00_000_00;  // load M
+        BRK0:             alu_op = 9'b00_00_101_00;  // - 1 
+        BRK1:             alu_op = 9'b00_00_101_00;  // - 1 
+        BRK2:             alu_op = 9'b00_00_101_00;  // - 1 
+        JSR0:             alu_op = 9'b00_00_101_00;  // - 1 
+        JSR1:             alu_op = 9'b00_00_101_00;  // - 1 
+        PUSH:             alu_op = 9'b00_00_101_00;  // - 1
+        RTS0:             alu_op = 9'b00_00_100_01;  // + 1 
+        RTS1:             alu_op = 9'b00_00_100_01;  // + 1 
+        RTI0:             alu_op = 9'b00_00_100_01;  // + 1
+        RTI1:             alu_op = 9'b00_00_100_01;  // + 1
+        RTI2:             alu_op = 9'b00_00_100_01;  // + 1
+        PULL:             alu_op = 9'b00_00_100_01;  // + 1
+        IMM0:             alu_op = 9'b10_00_000_00;  // load M
+        SYNC:             alu_op = {2'b00, alu };    // perform ALU operation
+        DATA:    if( st ) alu_op = 9'b00_00_100_00;  // store to M 
+                 else     alu_op = 9'b10_00_000_00;  // load M
         default: alu_op = 9'bxx_xx_xxx_xx;   
     endcase
 
 always @(*)
     case( state )
-        BACK:   mode = 1;
+        DATA:   mode = 1;
         INIT:   mode = 0;
         SYNC:   mode = 4;
         ABS0:   mode = 4;
@@ -400,6 +404,16 @@ always @(posedge clk)
         endcase
 
 /*
+ * st: store to memory
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'h48:  st <= 1;                // PHA
+          default:  st <= 0;        
+        endcase
+
+/*
  * src: select source register 
  */
 always @(posedge clk)
@@ -421,6 +435,7 @@ always @(posedge clk)
             8'hE8:  src <= 0;               // INX
 
             8'h68:  src <= 7;               // PLA
+            8'h48:  src <= 2;               // PHA 
 
             8'hA0:  src <= 7;               // LDY #IMM 
         endcase
@@ -508,16 +523,16 @@ always @(posedge clk)
             endcase
         IND0:   state <= IND1;
         IND1:   state <= IND2;      //
-        IND2:   state <= BACK;
+        IND2:   state <= DATA;
         IMM0:   state <= SYNC;
         ABS0:   state <= ABS1;
-        ZERO:   state <= rmw ? RDWR : BACK;
+        ZERO:   state <= rmw ? RDWR : DATA;
         ABS1:   state <= ind ? ABS0 : 
-                         jmp ? SYNC : BACK;
-        RDWR:   state <= BACK;
-        BACK:   state <= SYNC;
-        PULL:   state <= BACK;
-        PUSH:   state <= BACK;
+                         jmp ? SYNC : DATA;
+        RDWR:   state <= DATA;
+        DATA:   state <= SYNC;
+        PULL:   state <= DATA;
+        PUSH:   state <= DATA;
         RTS0:   state <= RTS1;
         RTS1:   state <= RTS2;
         RTS2:   state <= SYNC; 
@@ -542,7 +557,7 @@ always @(*)
     case( state )
         INIT: statename = "INIT";
         SYNC: statename = "SYNC";
-        BACK: statename = "BACK";
+        DATA: statename = "DATA";
         IMM0: statename = "IMM0";
         DATA: statename = "DATA";
         IND0: statename = "IND0";
