@@ -157,6 +157,12 @@ reg [5:0] state = INIT;
 
 assign sync = (state == SYNC);
 
+/* 
+ * loose state flops
+ */
+reg rmw, jmp, ind, add_x, add_y, ld;
+reg [1:0] dst;
+
 /*
  * write enable 
  */
@@ -221,7 +227,7 @@ always @(*)
         ABS1: if( add_x )      reg_op = 7'b0_00_0000; // X
               else if( add_y ) reg_op = 7'b0_00_0001; // Y
               else             reg_op = 7'b0_00_0111; // Z
-        SYNC:                  reg_op = { ld, 6'b10_0111 }; // A <= Z <op> M
+        SYNC:                  reg_op = { ld, dst, 4'b0111 }; // dst <= Z <op> M
      default:                  reg_op = 7'b0_00_0111; // Z
     endcase
 
@@ -294,10 +300,6 @@ always @(*)
         COND:   mode = 7;
     endcase
 
-/* 
- * loose state flops
- */
-reg rmw, jmp, ind, add_x, add_y, ld;
 
 /*
  * read-modify-write bit. When set, it means
@@ -385,6 +387,31 @@ always @(posedge clk)
             8'hAD:  ld <= 1;                // LDA ABS 
             8'hBD:  ld <= 1;                // LDA ABS,X
             8'hB9:  ld <= 1;                // LDA ABS,Y
+            8'hB6:  ld <= 1;                // LDX ZP,Y
+            8'hA0:  ld <= 1;                // LDY #IMM
+            8'hA2:  ld <= 1;                // LDX #IMM
+        endcase
+
+/*
+ * dst: select destination register 
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hB1:  dst <= 2;               // LDA (ZP),Y
+            8'hB2:  dst <= 2;               // LDA (ZP)
+            8'hA1:  dst <= 2;               // LDA (ZP,X)
+            8'hA5:  dst <= 2;               // LDA ZP
+            8'hA9:  dst <= 2;               // LDA #IMM
+            8'hB5:  dst <= 2;               // LDA ZP,X
+            8'hAD:  dst <= 2;               // LDA ABS 
+            8'hBD:  dst <= 2;               // LDA ABS,X
+            8'hB9:  dst <= 2;               // LDA ABS,Y
+
+            8'hA2:  dst <= 0;               // LDX #IMM 
+            8'hB6:  dst <= 0;               // LDX ZP,Y
+
+            8'hA0:  dst <= 1;               // LDY #IMM 
         endcase
 
 always @(posedge clk)
@@ -412,6 +439,8 @@ always @(posedge clk)
                 8'hBD:  state <= ABS0;      // LDA ABS,X
                 8'hB9:  state <= ABS0;      // LDA ABS,Y
                 8'hA9:  state <= IMM0;      // LDA #IMM
+                8'hA0:  state <= IMM0;      // LDY #IMM
+                8'hA2:  state <= IMM0;      // LDX #IMM
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
             endcase
