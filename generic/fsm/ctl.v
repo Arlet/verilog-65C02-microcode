@@ -175,6 +175,7 @@ always @(posedge clk)
         JSR1:    WE <= 1;
         PUSH:    WE <= 1;
         RDWR:    WE <= 1;
+        ZERO:    WE <= st;
         default: WE <= 0;
     endcase
 
@@ -407,8 +408,13 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        case( DB )
+        casez( DB )
             8'h48:  st <= 1;                // PHA
+     8'b01??_0100:  st <= 1;                // STZ
+     8'b100?_0?01:  st <= 1;                // STA 
+     8'b100?_0010:  st <= 1;                // STA (ZP) 
+     8'b1001_?001:  st <= 1;                // STA ABS,Y
+     8'b100?_?1??:  st <= 1;                // STA/STX/STZ
           default:  st <= 0;        
         endcase
 
@@ -418,15 +424,6 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         casez( DB )
-            8'hB1:  src <= 7;               // LDA (ZP),Y
-            8'hB2:  src <= 7;               // LDA (ZP)
-            8'hA1:  src <= 7;               // LDA (ZP,X)
-            8'hA5:  src <= 7;               // LDA ZP
-            8'hA9:  src <= 7;               // LDA #IMM
-            8'hB5:  src <= 7;               // LDA ZP,X
-            8'hAD:  src <= 7;               // LDA ABS 
-            8'hBD:  src <= 7;               // LDA ABS,X
-            8'hB9:  src <= 7;               // LDA ABS,Y
             8'hA2:  src <= 7;               // LDX #IMM 
             8'hB6:  src <= 7;               // LDX ZP,Y
             8'hCA:  src <= 0;               // DEX 
@@ -439,10 +436,14 @@ always @(posedge clk)
 
      8'b0???_??01:  src <= 2;               // ORA/AND/EOR/ADC
      8'b0???_0010:  src <= 2;               // ORA/AND/EOR/ADC 
-     8'b100?_??01:  src <= 7;               // LDA *
-     8'b100?_0010:  src <= 7;               // LDA (ZP) 
+     8'b100?_??01:  src <= 2;               // STA/BIT
+     8'b100?_0010:  src <= 2;               // STA (ZP) 
+     8'b101?_??01:  src <= 7;               // LDA *
+     8'b101?_0010:  src <= 7;               // LDA (ZP) 
      8'b11??_??01:  src <= 2;               // CMP/SBC *
      8'b11??_0010:  src <= 2;               // CMP/SBC (ZP) 
+
+        default:    src <= 4'bxxxx;
         endcase
 
 /*
@@ -459,6 +460,8 @@ always @(posedge clk)
             8'hA0:  dst <= 1;               // LDY #IMM 
      8'b????_??01:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC
      8'b????_0010:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC  (ZP)
+
+        default:    dst <= 2'bxx;
         endcase
 
 /*
@@ -487,6 +490,9 @@ always @(posedge clk)
      8'b011?_0010:  alu <= 7'b00_011_11;    // ADC (ZP) 
      8'b100?_??01:  alu <= 7'b00_011_00;    // LDA *
      8'b100?_0010:  alu <= 7'b00_011_00;    // LDA (ZP) 
+     8'b1000_1001:  alu <= 7'b00_001_00;    // BIT #IMM
+     8'b100?_??01:  alu <= 7'b00_011_00;    // STA (covers BIT #IMM)
+     8'b100?_0010:  alu <= 7'b00_011_00;    // STA (ZP) 
      8'b110?_??01:  alu <= 7'b00_101_01;    // CMP *
      8'b110?_0010:  alu <= 7'b00_101_01;    // CMP (ZP) 
      8'b111?_??01:  alu <= 7'b00_110_11;    // SBC *
