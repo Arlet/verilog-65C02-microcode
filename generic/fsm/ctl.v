@@ -211,6 +211,8 @@ always @(*)
         RTI0:           reg_op = 7'b1_11_0011; // S
         RTI1:           reg_op = 7'b1_11_0011; // S
         RTI2:           reg_op = 7'b1_11_0011; // S
+        IND0: if( zpx ) reg_op = 7'b0_00_0000; // X
+              else      reg_op = 7'b0_00_0111; // Z
         IND2: if( zpy ) reg_op = 7'b0_00_0001; // Y
               else      reg_op = 7'b0_00_0111; // Z
      default:           reg_op = 7'b0_00_0111; // Z
@@ -285,7 +287,7 @@ always @(*)
 /* 
  * loose state flops
  */
-reg rmw, jmp, ind, zpy;
+reg rmw, jmp, ind, zpx, zpy;
 
 /*
  * read-modify-write bit. When set, it means
@@ -333,13 +335,22 @@ always @(posedge clk)
         ind <= 0;
 
 /*
- * zpy: use Y register as offset 
+ * zpy: use Y register as offset for (ZP),Y 
  */
 always @(posedge clk)
     if( sync )
         case( DB )
             8'hB1:  zpy <= 1;               // LDA (ZP),Y
         default:    zpy <= 0;
+        endcase
+/*
+ * zpx: use X register as offset for (ZP,X)
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hA1:  zpx <= 1;               // LDA (ZP,X)
+        default:    zpx <= 0;
         endcase
 
 always @(posedge clk)
