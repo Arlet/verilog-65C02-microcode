@@ -219,6 +219,7 @@ always @(*)
         RTI0:                  reg_op = 7'b1_11_0011; // S
         RTI1:                  reg_op = 7'b1_11_0011; // S
         RTI2:                  reg_op = 7'b1_11_0011; // S
+        PULL:                  reg_op = 7'b1_11_0011; // S
         IND0: if( add_x )      reg_op = 7'b0_00_0000; // X
               else             reg_op = 7'b0_00_0111; // Z
         IND2: if( add_y )      reg_op = 7'b0_00_0001; // Y
@@ -264,6 +265,7 @@ always @(*)
         RTI0:    alu_op = 9'b00_00_100_01;  // + 1
         RTI1:    alu_op = 9'b00_00_100_01;  // + 1
         RTI2:    alu_op = 9'b00_00_100_01;  // + 1
+        PULL:    alu_op = 9'b00_00_100_01;  // + 1
         IMM0:    alu_op = 9'b10_00_000_00;  // load M
         SYNC:    alu_op = {2'b00, alu };    // perform ALU operation
         BACK:    alu_op = 9'b10_00_000_00;  // load M
@@ -394,6 +396,7 @@ always @(posedge clk)
             8'hA2:  ld <= 1;                // LDX #IMM
             8'hCA:  ld <= 1;                // DEX 
             8'hE8:  ld <= 1;                // INX
+            8'h68:  ld <= 1;                // PLA
         endcase
 
 /*
@@ -417,6 +420,8 @@ always @(posedge clk)
             8'hCA:  src <= 0;               // DEX 
             8'hE8:  src <= 0;               // INX
 
+            8'h68:  src <= 7;               // PLA
+
             8'hA0:  src <= 7;               // LDY #IMM 
         endcase
 
@@ -435,6 +440,7 @@ always @(posedge clk)
             8'hAD:  dst <= 2;               // LDA ABS 
             8'hBD:  dst <= 2;               // LDA ABS,X
             8'hB9:  dst <= 2;               // LDA ABS,Y
+            8'h68:  dst <= 2;               // PLA
 
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
@@ -465,6 +471,8 @@ always @(posedge clk)
 
             8'hCA:  alu <= 7'b00_101_00;    // DEX 
             8'hE8:  alu <= 7'b00_100_01;    // INX
+            
+            8'h68:  alu <= 7'b00_011_00;    // PLA
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
 
