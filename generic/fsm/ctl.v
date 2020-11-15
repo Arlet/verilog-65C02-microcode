@@ -277,7 +277,7 @@ always @(*)
         PULL:             alu_op = 9'b00_00_100_01;  // + 1
         IMM0:             alu_op = 9'b10_00_000_00;  // load M
         RDWR:             alu_op = 9'b10_00_000_00;  // load M
-        SYNC:             alu_op = {2'b00, alu };    // perform ALU operation
+        SYNC:             alu_op = {2'b10, alu };    // perform ALU operation
         DATA:    if( st ) alu_op = 9'b00_00_100_00;  // store to M 
                  else     alu_op = {2'b10, alu };    // load M or RMW
         default:          alu_op = 9'bxx_xx_xxx_xx;   
@@ -363,6 +363,7 @@ always @(posedge clk)
  * <>   = left/right shift
  * ADD  = ALU adder operation
  * CI   = ALU carry in
+ * W    = write ALU to register
  * DR   = destination register
  * SRCR = source register
  */
@@ -556,7 +557,6 @@ always @(posedge clk)
         INIT:   state <= SYNC;
         SYNC:   
             casez( DB )
-                8'h80:  state <= COND;      // BRA
                 8'h00:  state <= BRK0;      // BRK
                 8'h20:  state <= JSR0;      // JSR
                 8'h40:  state <= RTI0;      // RTI
@@ -564,6 +564,8 @@ always @(posedge clk)
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
 
+         8'b1000_0000:  state <= COND;      // BRA
+         8'b???1_0000:  state <= COND;      // other branches
          8'b????_0001:  state <= IND0;      // col 1 (ZP,X)/(ZP),Y
          8'b???1_0010:  state <= IND0;      // col 2 odd (ZP)
          8'b1010_00?0:  state <= IMM0;      // LDY#/LDX# 
