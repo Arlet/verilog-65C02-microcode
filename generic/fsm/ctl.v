@@ -174,8 +174,7 @@ always @(posedge clk)
         JSR0:    WE <= 1;
         JSR1:    WE <= 1;
         PUSH:    WE <= 1;
-        RTS0:    WE <= 0;
-        RTS1:    WE <= 0;
+        RDWR:    WE <= 1;
         default: WE <= 0;
     endcase
 
@@ -270,10 +269,11 @@ always @(*)
         RTI2:             alu_op = 9'b00_00_100_01;  // + 1
         PULL:             alu_op = 9'b00_00_100_01;  // + 1
         IMM0:             alu_op = 9'b10_00_000_00;  // load M
+        RDWR:             alu_op = 9'b10_00_000_00;  // load M
         SYNC:             alu_op = {2'b00, alu };    // perform ALU operation
         DATA:    if( st ) alu_op = 9'b00_00_100_00;  // store to M 
-                 else     alu_op = 9'b10_00_000_00;  // load M
-        default: alu_op = 9'bxx_xx_xxx_xx;   
+                 else     alu_op = {2'b10, alu };    // load M or RMW
+        default:          alu_op = 9'bxx_xx_xxx_xx;   
     endcase
 
 always @(*)
@@ -317,6 +317,8 @@ always @(posedge clk)
     if( sync )
         case( DB )
             8'h06:  rmw <= 1;
+            8'hE6:  rmw <= 1;
+            8'hEE:  rmw <= 1;
         default:    rmw <= 0;
         endcase
 
@@ -428,16 +430,15 @@ always @(posedge clk)
             8'hAD:  src <= 7;               // LDA ABS 
             8'hBD:  src <= 7;               // LDA ABS,X
             8'hB9:  src <= 7;               // LDA ABS,Y
-
             8'hA2:  src <= 7;               // LDX #IMM 
             8'hB6:  src <= 7;               // LDX ZP,Y
             8'hCA:  src <= 0;               // DEX 
             8'hE8:  src <= 0;               // INX
-
             8'h68:  src <= 7;               // PLA
             8'h48:  src <= 2;               // PHA 
-
             8'hA0:  src <= 7;               // LDY #IMM 
+            8'hE6:  src <= 5;               // INC ZP
+            8'hEE:  src <= 5;               // INC ABS 
         endcase
 
 /*
@@ -486,7 +487,11 @@ always @(posedge clk)
 
             8'hCA:  alu <= 7'b00_101_00;    // DEX 
             8'hE8:  alu <= 7'b00_100_01;    // INX
+
+            8'hE6:  alu <= 7'b00_011_00;    // INC ZP
+            8'hEE:  alu <= 7'b00_011_00;    // INC ABS 
             
+            8'h48:  alu <= 7'b00_011_00;    // PHA
             8'h68:  alu <= 7'b00_011_00;    // PLA
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
@@ -520,6 +525,8 @@ always @(posedge clk)
                 8'hA2:  state <= IMM0;      // LDX #IMM
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
+                8'hE6:  state <= ZERO;      // INC ZP
+                8'hEE:  state <= ABS0;      // INC ABS 
             endcase
         IND0:   state <= IND1;
         IND1:   state <= IND2;      //
@@ -528,7 +535,8 @@ always @(posedge clk)
         ABS0:   state <= ABS1;
         ZERO:   state <= rmw ? RDWR : DATA;
         ABS1:   state <= ind ? ABS0 : 
-                         jmp ? SYNC : DATA;
+                         jmp ? SYNC : 
+                         rmw ? RDWR : DATA;
         RDWR:   state <= DATA;
         DATA:   state <= SYNC;
         PULL:   state <= DATA;
