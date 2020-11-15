@@ -387,28 +387,19 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        case( DB )
-            8'hB1:  ld <= 1;                // LDA (ZP),Y
-            8'hB2:  ld <= 1;                // LDA (ZP)
-            8'hA1:  ld <= 1;                // LDA (ZP,X)
-            8'hA5:  ld <= 1;                // LDA ZP
-            8'hA9:  ld <= 1;                // LDA #IMM
-            8'hB5:  ld <= 1;                // LDA ZP,X
-            8'hAD:  ld <= 1;                // LDA ABS 
-            8'hBD:  ld <= 1;                // LDA ABS,X
-            8'hB9:  ld <= 1;                // LDA ABS,Y
+        casez( DB )
             8'hB6:  ld <= 1;                // LDX ZP,Y
             8'hA0:  ld <= 1;                // LDY #IMM
             8'hA2:  ld <= 1;                // LDX #IMM
             8'hCA:  ld <= 1;                // DEX 
             8'hE8:  ld <= 1;                // INX
             8'h68:  ld <= 1;                // PLA
-            8'h09:  ld <= 1;                // ORA #IMM 
-            8'h29:  ld <= 1;                // AND #IMM 
-            8'h49:  ld <= 1;                // EOR #IMM 
-            8'h69:  ld <= 1;                // ADC #IMM 
-            8'hE9:  ld <= 1;                // SBC #IMM 
-            8'h65:  ld <= 1;                // ADC ZP
+     8'b000?_??01:  ld <= 1;                // ORA *
+     8'b000?_0010:  ld <= 1;                // ORA (ZP)
+     8'b100?_??01:  ld <= 1;                // LDA *
+     8'b100?_0010:  ld <= 1;                // LDA (ZP) 
+     8'b111?_??01:  ld <= 1;                // SBC *
+     8'b111?_0010:  ld <= 1;                // SBC (ZP) 
         endcase
 
 /*
@@ -426,7 +417,7 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        case( DB )
+        casez( DB )
             8'hB1:  src <= 7;               // LDA (ZP),Y
             8'hB2:  src <= 7;               // LDA (ZP)
             8'hA1:  src <= 7;               // LDA (ZP,X)
@@ -445,13 +436,13 @@ always @(posedge clk)
             8'hA0:  src <= 7;               // LDY #IMM 
             8'hE6:  src <= 5;               // INC ZP
             8'hEE:  src <= 5;               // INC ABS 
-            8'h09:  src <= 2;               // ORA #IMM
-            8'h29:  src <= 2;               // AND #IMM
-            8'h49:  src <= 2;               // EOR #IMM
-            8'h69:  src <= 2;               // ADC #IMM
-            8'hC9:  src <= 2;               // CMP #IMM
-            8'hE9:  src <= 2;               // SBC #IMM
-            8'h65:  src <= 2;               // ADC ZP 
+
+     8'b0???_??01:  src <= 2;               // ORA/AND/EOR/ADC
+     8'b0???_0010:  src <= 2;               // ORA/AND/EOR/ADC 
+     8'b100?_??01:  src <= 7;               // LDA *
+     8'b100?_0010:  src <= 7;               // LDA (ZP) 
+     8'b11??_??01:  src <= 2;               // CMP/SBC *
+     8'b11??_0010:  src <= 2;               // CMP/SBC (ZP) 
         endcase
 
 /*
@@ -459,33 +450,15 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        case( DB )
-            8'hB1:  dst <= 2;               // LDA (ZP),Y
-            8'hB2:  dst <= 2;               // LDA (ZP)
-            8'hA1:  dst <= 2;               // LDA (ZP,X)
-            8'hA5:  dst <= 2;               // LDA ZP
-            8'hA9:  dst <= 2;               // LDA #IMM
-            8'hB5:  dst <= 2;               // LDA ZP,X
-            8'hAD:  dst <= 2;               // LDA ABS 
-            8'hBD:  dst <= 2;               // LDA ABS,X
-            8'hB9:  dst <= 2;               // LDA ABS,Y
+        casez( DB )
             8'h68:  dst <= 2;               // PLA
-
-            8'h09:  dst <= 2;               // ORA #IMM
-            8'h29:  dst <= 2;               // AND #IMM
-            8'h49:  dst <= 2;               // EOR #IMM
-            8'h69:  dst <= 2;               // ADC #IMM
-            8'hC9:  dst <= 2;               // CMP #IMM
-            8'hE9:  dst <= 2;               // SBC #IMM
-
-            8'h65:  dst <= 2;               // ADC ZP 
-
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
             8'hCA:  dst <= 0;               // DEX 
             8'hE8:  dst <= 0;               // INX
-
             8'hA0:  dst <= 1;               // LDY #IMM 
+     8'b????_??01:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC
+     8'b????_0010:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC  (ZP)
         endcase
 
 /*
@@ -493,36 +466,31 @@ always @(posedge clk)
  */
 always @(posedge clk)
     if( sync )
-        case( DB )
-            8'hB1:  alu <= 7'b00_011_00;    // LDA (ZP),Y
-            8'hB2:  alu <= 7'b00_011_00;    // LDA (ZP)
-            8'hA1:  alu <= 7'b00_011_00;    // LDA (ZP,X)
-            8'hA5:  alu <= 7'b00_011_00;    // LDA ZP
-            8'hA9:  alu <= 7'b00_011_00;    // LDA #IMM
-            8'hB5:  alu <= 7'b00_011_00;    // LDA ZP,X
-            8'hAD:  alu <= 7'b00_011_00;    // LDA ABS 
-            8'hBD:  alu <= 7'b00_011_00;    // LDA ABS,X
-            8'hB9:  alu <= 7'b00_011_00;    // LDA ABS,Y
+        casez( DB )
             8'hA2:  alu <= 7'b00_011_00;    // LDX #IMM 
             8'hB6:  alu <= 7'b00_011_00;    // LDX ZP,Y
             8'hA0:  alu <= 7'b00_011_00;    // LDY #IMM 
-
             8'hCA:  alu <= 7'b00_101_00;    // DEX 
             8'hE8:  alu <= 7'b00_100_01;    // INX
-
             8'hE6:  alu <= 7'b00_011_00;    // INC ZP
             8'hEE:  alu <= 7'b00_011_00;    // INC ABS 
-            
             8'h48:  alu <= 7'b00_011_00;    // PHA
             8'h68:  alu <= 7'b00_011_00;    // PLA
 
-            8'h09:  alu <= 7'b00_000_00;    // ORA #IMM
-            8'h29:  alu <= 7'b00_001_00;    // AND #IMM
-            8'h49:  alu <= 7'b00_010_00;    // EOR #IMM
-            8'h69:  alu <= 7'b00_011_11;    // ADC #IMM
-            8'he9:  alu <= 7'b00_110_11;    // SBC #IMM
-
-            8'h65:  alu <= 7'b00_011_11;    // ADC ZP 
+     8'b000?_??01:  alu <= 7'b00_000_00;    // ORA *
+     8'b000?_0010:  alu <= 7'b00_000_00;    // ORA (ZP)
+     8'b001?_??01:  alu <= 7'b00_001_00;    // AND *
+     8'b001?_0010:  alu <= 7'b00_001_00;    // AND (ZP)
+     8'b010?_??01:  alu <= 7'b00_010_00;    // EOR *
+     8'b010?_0010:  alu <= 7'b00_010_00;    // EOR (ZP)
+     8'b011?_??01:  alu <= 7'b00_011_11;    // ADC *
+     8'b011?_0010:  alu <= 7'b00_011_11;    // ADC (ZP) 
+     8'b100?_??01:  alu <= 7'b00_011_00;    // LDA *
+     8'b100?_0010:  alu <= 7'b00_011_00;    // LDA (ZP) 
+     8'b110?_??01:  alu <= 7'b00_101_01;    // CMP *
+     8'b110?_0010:  alu <= 7'b00_101_01;    // CMP (ZP) 
+     8'b111?_??01:  alu <= 7'b00_110_11;    // SBC *
+     8'b111?_0010:  alu <= 7'b00_110_11;    // SBC (ZP) 
 
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
@@ -531,40 +499,23 @@ always @(posedge clk)
     case( state )
         INIT:   state <= SYNC;
         SYNC:   
-            case( DB )
+            casez( DB )
                 8'h80:  state <= COND;      // BRA
                 8'h00:  state <= BRK0;      // BRK
                 8'h20:  state <= JSR0;      // JSR
                 8'h40:  state <= RTI0;      // RTI
                 8'h60:  state <= RTS0;      // RTS
-                8'h4C:  state <= ABS0;      // JMP ABS
-                8'h6C:  state <= ABS0;      // JMP (IND)
-                8'h7C:  state <= ABS0;      // JMP (IND,X)
-                8'h06:  state <= ZERO;      // ASL ZP
-                8'h16:  state <= ZERO;      // ASL ZP,X
-                8'hA5:  state <= ZERO;      // LDA ZP
-                8'h65:  state <= ZERO;      // ADC ZP
-                8'hB5:  state <= ZERO;      // LDA ZP,X
-                8'hB6:  state <= ZERO;      // LDX ZP,Y
-                8'hA1:  state <= IND0;      // LDA (ZP,X)
-                8'hB2:  state <= IND0;      // LDA (ZP)
-                8'hB1:  state <= IND0;      // LDA (ZP),Y
-                8'hAD:  state <= ABS0;      // LDA ABS 
-                8'hBD:  state <= ABS0;      // LDA ABS,X
-                8'hB9:  state <= ABS0;      // LDA ABS,Y
-                8'hA9:  state <= IMM0;      // LDA #IMM
-                8'hA0:  state <= IMM0;      // LDY #IMM
-                8'hA2:  state <= IMM0;      // LDX #IMM
-                8'h09:  state <= IMM0;      // ORA #IMM
-                8'h29:  state <= IMM0;      // AND #IMM
-                8'h49:  state <= IMM0;      // EOR #IMM
-                8'h69:  state <= IMM0;      // ADC #IMM
-                8'hC9:  state <= IMM0;      // CMP #IMM
-                8'hE9:  state <= IMM0;      // SBC #IMM
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
-                8'hE6:  state <= ZERO;      // INC ZP
-                8'hEE:  state <= ABS0;      // INC ABS 
+
+         8'b????_0001:  state <= IND0;      // col 1 (ZP,X)/(ZP),Y
+         8'b???1_0010:  state <= IND0;      // col 2 odd (ZP)
+         8'b1010_00?0:  state <= IMM0;      // LDY#/LDX# 
+         8'b11?0_00?0:  state <= IMM0;      // CPX#/CPY# 
+         8'b???0_1001:  state <= IMM0;      // col 9 even 
+         8'b???1_1001:  state <= ABS0;      // col 9 odd 
+         8'b????_1???:  state <= ABS0;      // col c,d,e,f
+         8'b????_01??:  state <= ZERO;      // col 4,5,6,7
             endcase
         IND0:   state <= IND1;
         IND1:   state <= IND2;      //
