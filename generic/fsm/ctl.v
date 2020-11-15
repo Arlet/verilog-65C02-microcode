@@ -158,7 +158,7 @@ assign sync = (state == SYNC);
 /* 
  * loose state flops
  */
-reg jmp, ind;
+reg ind;
 
 wire [3:0] src = control[3:0];
 wire [1:0] dst = control[5:4];
@@ -223,29 +223,31 @@ always @(*)
         BRK0:                  reg_op = 7'b1_11_0011; // S
         BRK1:                  reg_op = 7'b1_11_0011; // S
         BRK2:                  reg_op = 7'b1_11_0011; // S
-        BRK3:                  reg_op = 7'b0_00_1010; // BRK vector
+        BRK3:                  reg_op = 7'b0_xx_1010; // BRK vector
         JSR0:                  reg_op = 7'b1_11_0011; // S
         JSR1:                  reg_op = 7'b1_11_0011; // S
         RTS0:                  reg_op = 7'b1_11_0011; // S
         RTS1:                  reg_op = 7'b1_11_0011; // S
+        RTS2:                  reg_op = 7'b0_xx_0111; // Z
         RTI0:                  reg_op = 7'b1_11_0011; // S
         RTI1:                  reg_op = 7'b1_11_0011; // S
         RTI2:                  reg_op = 7'b1_11_0011; // S
+        RTI3:                  reg_op = 7'b0_xx_0111; // Z
         PUSH:                  reg_op = 7'b1_11_0011; // S
         PULL:                  reg_op = 7'b1_11_0011; // S
-        IND0: if( add_x )      reg_op = 7'b0_00_0000; // X
-              else             reg_op = 7'b0_00_0111; // Z
-        IND2: if( add_y )      reg_op = 7'b0_00_0001; // Y
-              else             reg_op = 7'b0_00_0111; // Z
-        ZERO: if( add_x )      reg_op = 7'b0_00_0000; // X
-              else if( add_y ) reg_op = 7'b0_00_0001; // Y
-              else             reg_op = 7'b0_00_0111; // Z
-        ABS1: if( add_x )      reg_op = 7'b0_00_0000; // X
-              else if( add_y ) reg_op = 7'b0_00_0001; // Y
-              else             reg_op = 7'b0_00_0111; // Z
+        IND0: if( add_x )      reg_op = 7'b0_xx_0000; // X
+              else             reg_op = 7'b0_xx_0111; // Z
+        IND2: if( add_y )      reg_op = 7'b0_xx_0001; // Y
+              else             reg_op = 7'b0_xx_0111; // Z
+        ZERO: if( add_x )      reg_op = 7'b0_xx_0000; // X
+              else if( add_y ) reg_op = 7'b0_xx_0001; // Y
+              else             reg_op = 7'b0_xx_0111; // Z
+        ABS1: if( add_x )      reg_op = 7'b0_xx_0000; // X
+              else if( add_y ) reg_op = 7'b0_xx_0001; // Y
+              else             reg_op = 7'b0_xx_0111; // Z
         SYNC:                  reg_op = { ld, dst, src }; // dst <= src <op> M
         DATA:                  reg_op = { 1'b0, dst, src }; // store
-     default:                  reg_op = 7'b0_00_0111; // Z
+     default:                  reg_op = 7'bx_xx_xxxx; // 
     endcase
 
 /*
@@ -320,6 +322,7 @@ always @(*)
         BRK2:   mode = 8;
         BRK3:   mode = 15;
         COND:   mode = 7;
+     default:   mode = 4'hX;
     endcase
 
 /*
@@ -533,6 +536,7 @@ always @(posedge clk)
              8'hFA: control <= 30'b0_1000011000_xx_xx0_00_000_00_1_00_0111; // PLX
              8'hFD: control <= 30'b0_1010011011_01_000_00_110_11_1_10_0010; // SBC ABS,X
              8'hFE: control <= 30'b0_1000011000_01_010_00_011_00_0_xx_0101; // INC ABS,X
+           default: control <= 30'bx_xxxxxxxxxx_xx_xxx_xx_xxx_xx_x_xx_xxxx;
         endcase
 
 always @(posedge clk)
@@ -621,7 +625,7 @@ always @(*)
         RTI0: statename = "RTI0";
         RTI1: statename = "RTI1";
         RTI2: statename = "RTI2";
-        RTI0: statename = "RTI3";
+        RTI3: statename = "RTI3";
         COND: statename = "COND";
     endcase
 `endif
