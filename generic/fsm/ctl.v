@@ -408,6 +408,7 @@ always @(posedge clk)
             8'h49:  ld <= 1;                // EOR #IMM 
             8'h69:  ld <= 1;                // ADC #IMM 
             8'hE9:  ld <= 1;                // SBC #IMM 
+            8'h65:  ld <= 1;                // ADC ZP
         endcase
 
 /*
@@ -450,6 +451,7 @@ always @(posedge clk)
             8'h69:  src <= 2;               // ADC #IMM
             8'hC9:  src <= 2;               // CMP #IMM
             8'hE9:  src <= 2;               // SBC #IMM
+            8'h65:  src <= 2;               // ADC ZP 
         endcase
 
 /*
@@ -475,6 +477,8 @@ always @(posedge clk)
             8'h69:  dst <= 2;               // ADC #IMM
             8'hC9:  dst <= 2;               // CMP #IMM
             8'hE9:  dst <= 2;               // SBC #IMM
+
+            8'h65:  dst <= 2;               // ADC ZP 
 
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
@@ -518,6 +522,8 @@ always @(posedge clk)
             8'h69:  alu <= 7'b00_011_11;    // ADC #IMM
             8'he9:  alu <= 7'b00_110_11;    // SBC #IMM
 
+            8'h65:  alu <= 7'b00_011_11;    // ADC ZP 
+
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
 
@@ -537,6 +543,7 @@ always @(posedge clk)
                 8'h06:  state <= ZERO;      // ASL ZP
                 8'h16:  state <= ZERO;      // ASL ZP,X
                 8'hA5:  state <= ZERO;      // LDA ZP
+                8'h65:  state <= ZERO;      // ADC ZP
                 8'hB5:  state <= ZERO;      // LDA ZP,X
                 8'hB6:  state <= ZERO;      // LDX ZP,Y
                 8'hA1:  state <= IND0;      // LDA (ZP,X)
