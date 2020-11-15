@@ -357,11 +357,14 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         case( DB )
+            8'h7C:  add_x <= 1;             // JMP (IND,X)
             8'hB5:  add_x <= 1;             // LDA ZP,X
             8'hBD:  add_x <= 1;             // LDA ABS,X
             8'hA1:  add_x <= 1;             // LDA (ZP,X)
         default:    add_x <= 0;
         endcase
+    else if( state == ABS1 )                // for JMP (IND,X)
+        add_x <= 0;
 
 always @(posedge clk)
     case( state )
@@ -375,6 +378,7 @@ always @(posedge clk)
                 8'h60:  state <= RTS0;      // RTS
                 8'h4C:  state <= ABS0;      // JMP ABS
                 8'h6C:  state <= ABS0;      // JMP (IND)
+                8'h7C:  state <= ABS0;      // JMP (IND,X)
                 8'h06:  state <= ZERO;      // ASL ZP
                 8'h16:  state <= ZERO;      // ASL ZP,X
                 8'hA5:  state <= ZERO;      // LDA ZP
