@@ -24,7 +24,7 @@ module ctl(
     output B,
     output reg [11:0] ab_op );
 
-wire [31:0] control;
+reg [31:0] control;
 
 /*
  * The NMI signal is edge sensitive. Detect edge,
@@ -158,10 +158,12 @@ assign sync = (state == SYNC);
 /* 
  * loose state flops
  */
-reg rmw, jmp, ind, add_x, add_y, ld, st;
-reg [1:0] dst;
-reg [3:0] src;
-reg [6:0] alu;
+reg rmw, jmp, ind, add_x, add_y, st;
+
+wire [3:0] src = control[3:0];
+wire [1:0] dst = control[5:4];
+wire ld = control[6];
+wire [6:0] alu = control[13:7];
 
 /*
  * write enable 
@@ -175,6 +177,7 @@ always @(posedge clk)
         JSR1:    WE <= 1;
         PUSH:    WE <= 1;
         RDWR:    WE <= 1;
+        ABS1:    WE <= st;
         ZERO:    WE <= st;
         default: WE <= 0;
     endcase
@@ -382,27 +385,6 @@ always @(posedge clk)
         endcase
     else if( state == ABS1 )                // for JMP (IND,X)
         add_x <= 0;
-
-/*
- * ld: load a register at the end of instruction
- */
-always @(posedge clk)
-    if( sync )
-        casez( DB )
-            8'hB6:  ld <= 1;                // LDX ZP,Y
-            8'hA0:  ld <= 1;                // LDY #IMM
-            8'hA2:  ld <= 1;                // LDX #IMM
-            8'hCA:  ld <= 1;                // DEX 
-            8'hE8:  ld <= 1;                // INX
-            8'h68:  ld <= 1;                // PLA
-     8'b0???_??01:  ld <= 1;                // ORA/AND/EOR/ADC 
-     8'b0???_0010:  ld <= 1;                // ORA/AND/EOR/ADC (ZP) 
-     8'b100?_??01:  ld <= 1;                // LDA *
-     8'b100?_0010:  ld <= 1;                // LDA (ZP) 
-     8'b111?_??01:  ld <= 1;                // SBC *
-     8'b111?_0010:  ld <= 1;                // SBC (ZP) 
-        endcase
-
 /*
  * st: store to memory
  */
@@ -418,87 +400,188 @@ always @(posedge clk)
           default:  st <= 0;        
         endcase
 
-/*
- * src: select source register 
- */
 always @(posedge clk)
     if( sync )
-        casez( DB )
-            8'hA2:  src <= 7;               // LDX #IMM 
-            8'hB6:  src <= 7;               // LDX ZP,Y
-            8'hCA:  src <= 0;               // DEX 
-            8'hE8:  src <= 0;               // INX
-            8'h68:  src <= 7;               // PLA
-            8'h48:  src <= 2;               // PHA 
-            8'hA0:  src <= 7;               // LDY #IMM 
-            8'hE6:  src <= 5;               // INC ZP
-            8'hEE:  src <= 5;               // INC ABS 
-
-     8'b0???_??01:  src <= 2;               // ORA/AND/EOR/ADC
-     8'b0???_0010:  src <= 2;               // ORA/AND/EOR/ADC 
-     8'b100?_??01:  src <= 2;               // STA/BIT
-     8'b100?_0010:  src <= 2;               // STA (ZP) 
-     8'b101?_??01:  src <= 7;               // LDA *
-     8'b101?_0010:  src <= 7;               // LDA (ZP) 
-     8'b11??_??01:  src <= 2;               // CMP/SBC *
-     8'b11??_0010:  src <= 2;               // CMP/SBC (ZP) 
-
-        default:    src <= 4'bxxxx;
-        endcase
-
-/*
- * dst: select destination register 
- */
-always @(posedge clk)
-    if( sync )
-        casez( DB )
-            8'h68:  dst <= 2;               // PLA
-            8'hA2:  dst <= 0;               // LDX #IMM 
-            8'hB6:  dst <= 0;               // LDX ZP,Y
-            8'hCA:  dst <= 0;               // DEX 
-            8'hE8:  dst <= 0;               // INX
-            8'hA0:  dst <= 1;               // LDY #IMM 
-     8'b????_??01:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC
-     8'b????_0010:  dst <= 2;               // ORA/AND/EOR/ADC/STA/LDA/CMP/SBC  (ZP)
-
-        default:    dst <= 2'bxx;
-        endcase
-
-/*
- * alu: select ALU operation 
- */
-always @(posedge clk)
-    if( sync )
-        casez( DB )
-            8'hA2:  alu <= 7'b00_011_00;    // LDX #IMM 
-            8'hB6:  alu <= 7'b00_011_00;    // LDX ZP,Y
-            8'hA0:  alu <= 7'b00_011_00;    // LDY #IMM 
-            8'hCA:  alu <= 7'b00_101_00;    // DEX 
-            8'hE8:  alu <= 7'b00_100_01;    // INX
-            8'hE6:  alu <= 7'b00_011_00;    // INC ZP
-            8'hEE:  alu <= 7'b00_011_00;    // INC ABS 
-            8'h48:  alu <= 7'b00_011_00;    // PHA
-            8'h68:  alu <= 7'b00_011_00;    // PLA
-
-     8'b000?_??01:  alu <= 7'b00_000_00;    // ORA *
-     8'b000?_0010:  alu <= 7'b00_000_00;    // ORA (ZP)
-     8'b001?_??01:  alu <= 7'b00_001_00;    // AND *
-     8'b001?_0010:  alu <= 7'b00_001_00;    // AND (ZP)
-     8'b010?_??01:  alu <= 7'b00_010_00;    // EOR *
-     8'b010?_0010:  alu <= 7'b00_010_00;    // EOR (ZP)
-     8'b011?_??01:  alu <= 7'b00_011_11;    // ADC *
-     8'b011?_0010:  alu <= 7'b00_011_11;    // ADC (ZP) 
-     8'b100?_??01:  alu <= 7'b00_011_00;    // LDA *
-     8'b100?_0010:  alu <= 7'b00_011_00;    // LDA (ZP) 
-     8'b1000_1001:  alu <= 7'b00_001_00;    // BIT #IMM
-     8'b100?_??01:  alu <= 7'b00_011_00;    // STA (covers BIT #IMM)
-     8'b100?_0010:  alu <= 7'b00_011_00;    // STA (ZP) 
-     8'b110?_??01:  alu <= 7'b00_101_01;    // CMP *
-     8'b110?_0010:  alu <= 7'b00_101_01;    // CMP (ZP) 
-     8'b111?_??01:  alu <= 7'b00_110_11;    // SBC *
-     8'b111?_0010:  alu <= 7'b00_110_11;    // SBC (ZP) 
-
-        default:    alu <= 7'b11_111_11;    // don't care
+        case( DB )
+                              //   SH ADD CI W DR SRCR
+             8'h00: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BRK
+             8'h01: control <= 20'b00_000_00_1_10_0010; // ORA (ZP,X)
+             8'h04: control <= 20'b00_000_00_0_xx_0010; // TSB ZP
+             8'h05: control <= 20'b00_000_00_1_10_0010; // ORA ZP
+             8'h06: control <= 20'b10_000_00_0_xx_0111; // ASL ZP
+             8'h08: control <= 20'bxx_xxx_xx_0_xx_xxxx; // PHP
+             8'h09: control <= 20'b00_000_00_1_10_0010; // ORA #IMM
+             8'h0A: control <= 20'b10_000_00_0_xx_0010; // ASL A
+             8'h0C: control <= 20'b00_000_00_0_xx_0010; // TSB ABS
+             8'h0D: control <= 20'b00_000_00_1_10_0010; // ORA ABS
+             8'h0E: control <= 20'b10_000_00_0_xx_0111; // ASL ABS
+             8'h10: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BPL
+             8'h11: control <= 20'b00_000_00_1_10_0010; // ORA (ZP),Y
+             8'h12: control <= 20'b00_000_00_1_10_0010; // ORA (ZP)
+             8'h14: control <= 20'b00_111_00_0_xx_0010; // TRB ZP
+             8'h15: control <= 20'b00_000_00_1_10_0010; // ORA ZP,X
+             8'h16: control <= 20'b10_000_00_0_xx_0111; // ASL ZP,X
+             8'h18: control <= 20'b00_000_00_0_xx_0111; // CLC
+             8'h19: control <= 20'b00_000_00_1_10_0010; // ORA ABS,Y
+             8'h1A: control <= 20'b00_100_01_1_10_0010; // INC A
+             8'h1C: control <= 20'b00_111_00_0_xx_0010; // TRB ABS
+             8'h1D: control <= 20'b00_000_00_1_10_0010; // ORA ABS,X
+             8'h1E: control <= 20'b10_000_00_0_xx_0111; // ASL ABS,X
+             8'h20: control <= 20'bxx_xxx_xx_0_xx_xxxx; // JSR
+             8'h21: control <= 20'b00_001_00_1_10_0010; // AND (ZP,X)
+             8'h24: control <= 20'b00_001_00_0_xx_0010; // BIT ZP
+             8'h25: control <= 20'b00_001_00_1_10_0010; // AND ZP
+             8'h26: control <= 20'b10_000_10_0_xx_0111; // ROL ZP
+             8'h28: control <= 20'bxx_xxx_xx_0_xx_0111; // PLP
+             8'h29: control <= 20'b00_001_00_1_10_0010; // AND #IMM
+             8'h2A: control <= 20'b10_000_10_1_10_0010; // ROL A
+             8'h2C: control <= 20'b00_001_00_0_xx_0010; // BIT ABS
+             8'h2D: control <= 20'b00_001_00_1_10_0010; // AND ABS
+             8'h2E: control <= 20'b10_000_10_0_xx_0111; // ROL ABS
+             8'h30: control <= 20'b_xx_xxx_xx0_xx_xxxx; // BMI
+             8'h31: control <= 20'b00_001_00_1_10_0010; // AND (ZP),Y
+             8'h32: control <= 20'b00_001_00_1_10_0010; // AND (ZP)
+             8'h34: control <= 20'b00_001_00_0_xx_0010; // BIT ZP,X
+             8'h35: control <= 20'b00_001_00_1_10_0010; // AND ZP,X
+             8'h36: control <= 20'b10_000_10_0_xx_0111; // ROL ZP,X
+             8'h38: control <= 20'b00_101_01_0_xx_0111; // SEC
+             8'h39: control <= 20'b00_001_00_1_10_0010; // AND ABS,Y
+             8'h3A: control <= 20'b00_101_00_1_10_0010; // DEC A
+             8'h3C: control <= 20'b00_001_00_0_xx_0010; // BIT ABS,X
+             8'h3D: control <= 20'b00_001_00_1_10_0010; // AND ABS,X
+             8'h3E: control <= 20'b10_000_10_0_xx_0111; // ROL ABS,X
+             8'h40: control <= 20'bxx_xxx_xx_0_xx_0111; // RTI
+             8'h41: control <= 20'b00_010_00_1_10_0010; // EOR (ZP,X)
+             8'h45: control <= 20'b00_010_00_1_10_0010; // EOR ZP
+             8'h46: control <= 20'b11_000_00_0_xx_0111; // LSR ZP
+             8'h48: control <= 20'b00_000_00_0_xx_0010; // PHA
+             8'h49: control <= 20'b00_010_00_1_10_0010; // EOR #IMM
+             8'h4A: control <= 20'b11_000_00_0_xx_0010; // LSR A
+             8'h4C: control <= 20'bxx_xxx_xx_0_xx_xxxx; // JMP
+             8'h4D: control <= 20'b00_010_00_1_10_0010; // EOR ABS
+             8'h4E: control <= 20'b11_000_00_0_xx_0111; // LSR ABS
+             8'h50: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BVC
+             8'h51: control <= 20'b00_010_00_1_10_0010; // EOR (ZP),Y
+             8'h52: control <= 20'b00_010_00_1_10_0010; // EOR (ZP)
+             8'h55: control <= 20'b00_010_00_1_10_0010; // EOR ZP,X
+             8'h56: control <= 20'b11_000_00_0_xx_0111; // LSR ZP,X
+             8'h58: control <= 20'b00_000_00_0_xx_xxxx; // CLI
+             8'h59: control <= 20'b00_010_00_1_10_0010; // EOR ABS,Y
+             8'h5A: control <= 20'b00_000_00_0_xx_0001; // PHY
+             8'h5D: control <= 20'b00_010_00_1_10_0010; // EOR ABS,X
+             8'h5E: control <= 20'b11_000_00_0_xx_0111; // LSR ABS,X
+             8'h60: control <= 20'bxx_xxx_xx_0_xx_xxxx; // RTS
+             8'h61: control <= 20'b00_011_11_1_10_0010; // ADC (ZP,X)
+             8'h64: control <= 20'b00_000_00_0_xx_0111; // STZ ZP
+             8'h65: control <= 20'b00_011_11_1_10_0010; // ADC ZP
+             8'h66: control <= 20'b11_000_10_0_xx_0111; // ROR ZP
+             8'h68: control <= 20'b00_000_00_1_10_0111; // PLA
+             8'h69: control <= 20'b00_011_11_1_10_0010; // ADC #IMM
+             8'h6A: control <= 20'b11_000_10_1_10_0010; // ROR A
+             8'h6C: control <= 20'bxx_xxx_xx_0_xx_xxxx; // JMP (IND)
+             8'h6D: control <= 20'b00_011_11_1_10_0010; // ADC ABS
+             8'h6E: control <= 20'b11_000_10_0_xx_0111; // ROR ABS
+             8'h70: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BVS
+             8'h71: control <= 20'b00_011_11_1_10_0010; // ADC (ZP),Y
+             8'h72: control <= 20'b00_011_11_1_10_0010; // ADC (ZP)
+             8'h74: control <= 20'b00_000_00_0_xx_0111; // STZ ZP,X
+             8'h75: control <= 20'b00_011_11_1_10_0010; // ADC ZP,X
+             8'h76: control <= 20'b11_000_10_0_xx_0111; // ROR ZP,X
+             8'h78: control <= 20'bxx_xxx_xx_0_xx_xxxx; // SEI
+             8'h79: control <= 20'b00_011_11_1_10_0010; // ADC ABS,Y
+             8'h7A: control <= 20'b00_000_00_1_01_0111; // PLY
+             8'h7C: control <= 20'bxx_xxx_xx_0_xx_xxxx; // JMP (IND,X)
+             8'h7D: control <= 20'b00_011_11_1_10_0010; // ADC ABS,X
+             8'h7E: control <= 20'b11_000_10_0_xx_0111; // ROR ABS,X
+             8'h80: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BRA
+             8'h81: control <= 20'b00_100_00_0_xx_0010; // STA (ZP,X)
+             8'h84: control <= 20'b00_100_00_0_xx_0001; // STY ZP
+             8'h85: control <= 20'b00_100_00_0_xx_0010; // STA ZP
+             8'h86: control <= 20'b00_100_00_0_xx_0000; // STX ZP
+             8'h88: control <= 20'b00_101_00_1_01_0001; // DEY
+             8'h89: control <= 20'b00_001_00_0_xx_0010; // BIT #IMM
+             8'h8A: control <= 20'b00_000_00_1_10_0000; // TXA
+             8'h8C: control <= 20'b00_100_00_0_xx_0001; // STY ABS
+             8'h8D: control <= 20'b00_100_00_0_xx_0010; // STA ABS
+             8'h8E: control <= 20'b00_100_00_0_xx_0000; // STX ABS
+             8'h90: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BCC
+             8'h91: control <= 20'b00_100_00_0_xx_0010; // STA (ZP),Y
+             8'h92: control <= 20'b00_100_00_0_xx_0010; // STA (ZP)
+             8'h94: control <= 20'b00_100_00_0_xx_0001; // STY ZP,X
+             8'h95: control <= 20'b00_100_00_0_xx_0010; // STA ZP,X
+             8'h96: control <= 20'b00_100_00_0_xx_0000; // STX ZP,Y
+             8'h98: control <= 20'b00_000_00_1_10_0001; // TYA
+             8'h99: control <= 20'b00_100_00_0_xx_0010; // STA ABS,Y
+             8'h9A: control <= 20'b00_000_00_1_11_0000; // TXS
+             8'h9C: control <= 20'b00_100_00_0_xx_0111; // STZ ABS
+             8'h9D: control <= 20'b00_100_00_0_xx_0010; // STA ABS,X
+             8'h9E: control <= 20'b00_100_00_0_xx_0111; // STZ ABS,X
+             8'hA0: control <= 20'b00_000_00_1_01_0111; // LDY #IMM
+             8'hA1: control <= 20'b00_000_00_1_10_0111; // LDA (ZP,X)
+             8'hA2: control <= 20'b00_000_00_0_00_0111; // LDX #IMM
+             8'hA4: control <= 20'b00_000_00_1_01_0111; // LDY ZP
+             8'hA5: control <= 20'b00_000_00_1_10_0111; // LDA ZP
+             8'hA6: control <= 20'b00_000_00_0_00_0111; // LDX ZP
+             8'hA8: control <= 20'b00_000_00_1_01_0010; // TAY
+             8'hA9: control <= 20'b00_000_00_1_10_0111; // LDA #IMM
+             8'hAA: control <= 20'b00_000_00_1_00_0010; // TAX
+             8'hAC: control <= 20'b00_000_00_1_01_0111; // LDY ABS
+             8'hAD: control <= 20'b00_000_00_1_10_0111; // LDA ABS
+             8'hAE: control <= 20'b00_000_00_0_00_0111; // LDX ABS
+             8'hB0: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BCS
+             8'hB1: control <= 20'b00_000_00_1_10_0111; // LDA (ZP),Y
+             8'hB2: control <= 20'b00_000_00_1_10_0111; // LDA (ZP)
+             8'hB4: control <= 20'b00_000_00_1_01_0111; // LDY ZP,X
+             8'hB5: control <= 20'b00_000_00_1_10_0111; // LDA ZP,X
+             8'hB6: control <= 20'b00_000_00_0_00_0111; // LDX ZP,Y
+             8'hB8: control <= 20'b00_000_00_0_xx_0111; // CLV
+             8'hB9: control <= 20'b00_000_00_1_10_0111; // LDA ABS,Y
+             8'hBA: control <= 20'b00_000_00_0_00_0011; // TSX
+             8'hBC: control <= 20'b00_000_00_1_01_0111; // LDY ABS,X
+             8'hBD: control <= 20'b00_000_00_1_10_0111; // LDA ABS,X
+             8'hBE: control <= 20'b00_000_00_0_00_0111; // LDX ABS,Y
+             8'hC0: control <= 20'b00_110_01_0_xx_0001; // CPY #IMM
+             8'hC1: control <= 20'b00_110_01_0_xx_0010; // CMP (ZP,X)
+             8'hC4: control <= 20'b00_110_01_0_xx_0001; // CPY ZP
+             8'hC5: control <= 20'b00_110_01_0_xx_0010; // CMP ZP
+             8'hC6: control <= 20'b00_011_00_0_xx_0110; // DEC ZP
+             8'hC8: control <= 20'b00_100_01_1_01_0001; // INY
+             8'hC9: control <= 20'b00_110_01_0_xx_0010; // CMP #IMM
+             8'hCA: control <= 20'b00_101_00_0_00_0000; // DEX
+             8'hCC: control <= 20'b00_110_01_0_xx_0001; // CPY ABS
+             8'hCD: control <= 20'b00_110_01_0_xx_0010; // CMP ABS
+             8'hCE: control <= 20'b00_011_00_0_xx_0110; // DEC ABS
+             8'hD0: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BNE
+             8'hD1: control <= 20'b00_110_01_0_xx_0010; // CMP (ZP),Y
+             8'hD2: control <= 20'b00_110_01_0_xx_0010; // CMP (ZP)
+             8'hD5: control <= 20'b00_110_01_0_xx_0010; // CMP ZP,X
+             8'hD6: control <= 20'b00_011_00_0_xx_0110; // DEC ZP,X
+             8'hD8: control <= 20'bxx_xxx_xx_0_xx_xxxx; // CLD
+             8'hD9: control <= 20'b00_110_01_0_xx_0010; // CMP ABS,Y
+             8'hDA: control <= 20'b00_000_00_0_xx_0000; // PHX
+             8'hDD: control <= 20'b00_110_01_0_xx_0010; // CMP ABS,X
+             8'hDE: control <= 20'b00_011_00_0_xx_0110; // DEC ABS,X
+             8'hE0: control <= 20'b00_110_01_0_xx_0000; // CPX #IMM
+             8'hE1: control <= 20'b00_110_11_1_10_0010; // SBC (ZP,X)
+             8'hE4: control <= 20'b00_110_01_0_xx_0000; // CPX ZP
+             8'hE5: control <= 20'b00_110_11_1_10_0010; // SBC ZP
+             8'hE6: control <= 20'b00_011_01_0_xx_0101; // INC ZP
+             8'hE8: control <= 20'b00_100_01_0_00_0000; // INX
+             8'hE9: control <= 20'b00_110_11_1_10_0010; // SBC #IMM
+             8'hEA: control <= 20'bxx_xxx_xx_0_xx_xxxx; // NOP
+             8'hEC: control <= 20'b00_110_01_0_xx_0000; // CPX ABS
+             8'hED: control <= 20'b00_110_11_1_10_0010; // SBC ABS
+             8'hEE: control <= 20'b00_011_01_0_xx_0101; // INC ABS
+             8'hF0: control <= 20'bxx_xxx_xx_0_xx_xxxx; // BEQ
+             8'hF1: control <= 20'b00_110_11_1_10_0010; // SBC (ZP),Y
+             8'hF2: control <= 20'b00_110_11_1_10_0010; // SBC (ZP)
+             8'hF5: control <= 20'b00_110_11_1_10_0010; // SBC ZP,X
+             8'hF6: control <= 20'b00_011_01_0_xx_0101; // INC ZP,X
+             8'hF8: control <= 20'bxx_xxx_xx_0_xx_xxxx; // SED
+             8'hF9: control <= 20'b00_110_11_1_10_0010; // SBC ABS,Y
+             8'hFA: control <= 20'b00_000_00_0_00_0111; // PLX
+             8'hFD: control <= 20'b00_110_11_1_10_0010; // SBC ABS,X
+             8'hFE: control <= 20'b00_011_01_0_xx_0101; // INC ABS,X
         endcase
 
 always @(posedge clk)
