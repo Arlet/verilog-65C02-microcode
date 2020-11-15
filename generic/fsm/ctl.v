@@ -200,22 +200,25 @@ always @(*)
  */
 always @(*)
     case( state )
-        BRK0:           reg_op = 7'b1_11_0011; // S
-        BRK1:           reg_op = 7'b1_11_0011; // S
-        BRK2:           reg_op = 7'b1_11_0011; // S
-        BRK3:           reg_op = 7'b0_00_1010; // BRK vector
-        JSR0:           reg_op = 7'b1_11_0011; // S
-        JSR1:           reg_op = 7'b1_11_0011; // S
-        RTS0:           reg_op = 7'b1_11_0011; // S
-        RTS1:           reg_op = 7'b1_11_0011; // S
-        RTI0:           reg_op = 7'b1_11_0011; // S
-        RTI1:           reg_op = 7'b1_11_0011; // S
-        RTI2:           reg_op = 7'b1_11_0011; // S
-        IND0: if( zpx ) reg_op = 7'b0_00_0000; // X
-              else      reg_op = 7'b0_00_0111; // Z
-        IND2: if( zpy ) reg_op = 7'b0_00_0001; // Y
-              else      reg_op = 7'b0_00_0111; // Z
-     default:           reg_op = 7'b0_00_0111; // Z
+        BRK0:                reg_op = 7'b1_11_0011; // S
+        BRK1:                reg_op = 7'b1_11_0011; // S
+        BRK2:                reg_op = 7'b1_11_0011; // S
+        BRK3:                reg_op = 7'b0_00_1010; // BRK vector
+        JSR0:                reg_op = 7'b1_11_0011; // S
+        JSR1:                reg_op = 7'b1_11_0011; // S
+        RTS0:                reg_op = 7'b1_11_0011; // S
+        RTS1:                reg_op = 7'b1_11_0011; // S
+        RTI0:                reg_op = 7'b1_11_0011; // S
+        RTI1:                reg_op = 7'b1_11_0011; // S
+        RTI2:                reg_op = 7'b1_11_0011; // S
+        IND0: if( zpx )      reg_op = 7'b0_00_0000; // X
+              else           reg_op = 7'b0_00_0111; // Z
+        IND2: if( zpy )      reg_op = 7'b0_00_0001; // Y
+              else           reg_op = 7'b0_00_0111; // Z
+        ZERO: if( zpx )      reg_op = 7'b0_00_0000; // X
+              else if( zpy ) reg_op = 7'b0_00_0001; // Y
+              else           reg_op = 7'b0_00_0111; // Z
+     default:                reg_op = 7'b0_00_0111; // Z
     endcase
 
 /*
@@ -335,20 +338,22 @@ always @(posedge clk)
         ind <= 0;
 
 /*
- * zpy: use Y register as offset for (ZP),Y 
+ * zpy: use Y register as offset
  */
 always @(posedge clk)
     if( sync )
         case( DB )
             8'hB1:  zpy <= 1;               // LDA (ZP),Y
+            8'hB6:  zpy <= 1;               // LDX ZP,Y
         default:    zpy <= 0;
         endcase
 /*
- * zpx: use X register as offset for (ZP,X)
+ * zpx: use X register as offset
  */
 always @(posedge clk)
     if( sync )
         case( DB )
+            8'hB5:  zpx <= 1;               // LDA ZP,X
             8'hA1:  zpx <= 1;               // LDA (ZP,X)
         default:    zpx <= 0;
         endcase
@@ -367,8 +372,10 @@ always @(posedge clk)
                 8'h6C:  state <= ABS0;      // JMP (IND)
                 8'hAD:  state <= ABS0;      // LDA ABS 
                 8'h06:  state <= ZERO;      // ASL ZP
+                8'h16:  state <= ZERO;      // ASL ZP,X
                 8'hA5:  state <= ZERO;      // LDA ZP
                 8'hB5:  state <= ZERO;      // LDA ZP,X
+                8'hB6:  state <= ZERO;      // LDX ZP,Y
                 8'hA1:  state <= IND0;      // LDA (ZP,X)
                 8'hB2:  state <= IND0;      // LDA (ZP)
                 8'hB1:  state <= IND0;      // LDA (ZP),Y
