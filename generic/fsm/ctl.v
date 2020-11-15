@@ -403,7 +403,11 @@ always @(posedge clk)
             8'hCA:  ld <= 1;                // DEX 
             8'hE8:  ld <= 1;                // INX
             8'h68:  ld <= 1;                // PLA
+            8'h09:  ld <= 1;                // ORA #IMM 
+            8'h29:  ld <= 1;                // AND #IMM 
+            8'h49:  ld <= 1;                // EOR #IMM 
             8'h69:  ld <= 1;                // ADC #IMM 
+            8'hE9:  ld <= 1;                // SBC #IMM 
         endcase
 
 /*
@@ -440,7 +444,12 @@ always @(posedge clk)
             8'hA0:  src <= 7;               // LDY #IMM 
             8'hE6:  src <= 5;               // INC ZP
             8'hEE:  src <= 5;               // INC ABS 
-            8'h69:  src <= 2;               // ADC #IMM 
+            8'h09:  src <= 2;               // ORA #IMM
+            8'h29:  src <= 2;               // AND #IMM
+            8'h49:  src <= 2;               // EOR #IMM
+            8'h69:  src <= 2;               // ADC #IMM
+            8'hC9:  src <= 2;               // CMP #IMM
+            8'hE9:  src <= 2;               // SBC #IMM
         endcase
 
 /*
@@ -459,7 +468,13 @@ always @(posedge clk)
             8'hBD:  dst <= 2;               // LDA ABS,X
             8'hB9:  dst <= 2;               // LDA ABS,Y
             8'h68:  dst <= 2;               // PLA
+
+            8'h09:  dst <= 2;               // ORA #IMM
+            8'h29:  dst <= 2;               // AND #IMM
+            8'h49:  dst <= 2;               // EOR #IMM
             8'h69:  dst <= 2;               // ADC #IMM
+            8'hC9:  dst <= 2;               // CMP #IMM
+            8'hE9:  dst <= 2;               // SBC #IMM
 
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
@@ -497,7 +512,12 @@ always @(posedge clk)
             8'h48:  alu <= 7'b00_011_00;    // PHA
             8'h68:  alu <= 7'b00_011_00;    // PLA
 
+            8'h09:  alu <= 7'b00_000_00;    // ORA #IMM
+            8'h29:  alu <= 7'b00_001_00;    // AND #IMM
+            8'h49:  alu <= 7'b00_010_00;    // EOR #IMM
             8'h69:  alu <= 7'b00_011_11;    // ADC #IMM
+            8'he9:  alu <= 7'b00_110_11;    // SBC #IMM
+
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
 
@@ -528,7 +548,12 @@ always @(posedge clk)
                 8'hA9:  state <= IMM0;      // LDA #IMM
                 8'hA0:  state <= IMM0;      // LDY #IMM
                 8'hA2:  state <= IMM0;      // LDX #IMM
+                8'h09:  state <= IMM0;      // ORA #IMM
+                8'h29:  state <= IMM0;      // AND #IMM
+                8'h49:  state <= IMM0;      // EOR #IMM
                 8'h69:  state <= IMM0;      // ADC #IMM
+                8'hC9:  state <= IMM0;      // CMP #IMM
+                8'hE9:  state <= IMM0;      // SBC #IMM
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
                 8'hE6:  state <= ZERO;      // INC ZP
