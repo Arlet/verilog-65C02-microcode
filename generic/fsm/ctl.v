@@ -200,18 +200,20 @@ always @(*)
  */
 always @(*)
     case( state )
-        BRK0:   reg_op = 7'b1_11_0011;  // S
-        BRK1:   reg_op = 7'b1_11_0011;  // S
-        BRK2:   reg_op = 7'b1_11_0011;  // S
-        BRK3:   reg_op = 7'b0_00_1010;  // BRK vector
-        JSR0:   reg_op = 7'b1_11_0011;  // S
-        JSR1:   reg_op = 7'b1_11_0011;  // S
-        RTS0:   reg_op = 7'b1_11_0011;  // S
-        RTS1:   reg_op = 7'b1_11_0011;  // S
-        RTI0:   reg_op = 7'b1_11_0011;  // S
-        RTI1:   reg_op = 7'b1_11_0011;  // S
-        RTI2:   reg_op = 7'b1_11_0011;  // S
-     default:   reg_op = 7'b0_00_0111;  // zero
+        BRK0:           reg_op = 7'b1_11_0011; // S
+        BRK1:           reg_op = 7'b1_11_0011; // S
+        BRK2:           reg_op = 7'b1_11_0011; // S
+        BRK3:           reg_op = 7'b0_00_1010; // BRK vector
+        JSR0:           reg_op = 7'b1_11_0011; // S
+        JSR1:           reg_op = 7'b1_11_0011; // S
+        RTS0:           reg_op = 7'b1_11_0011; // S
+        RTS1:           reg_op = 7'b1_11_0011; // S
+        RTI0:           reg_op = 7'b1_11_0011; // S
+        RTI1:           reg_op = 7'b1_11_0011; // S
+        RTI2:           reg_op = 7'b1_11_0011; // S
+        IND2: if( zpy ) reg_op = 7'b0_00_0001; // Y
+              else      reg_op = 7'b0_00_0111; // Z
+     default:           reg_op = 7'b0_00_0111; // Z
     endcase
 
 /*
@@ -280,8 +282,15 @@ always @(*)
         COND:   mode = 7;
     endcase
 
-reg rmw, jmp, ind;
+/* 
+ * loose state flops
+ */
+reg rmw, jmp, ind, zpy;
 
+/*
+ * read-modify-write bit. When set, it means
+ * we hold the address for extra cycle
+ */
 always @(posedge clk)
     if( sync )
         case( DB )
@@ -289,6 +298,11 @@ always @(posedge clk)
         default:    rmw <= 0;
         endcase
 
+/*
+ * jmp bit, indicates that we're jumping to
+ * absolute address instead of using it for
+ * data
+ */
 always @(posedge clk)
     if( sync )
         case( DB )
@@ -302,6 +316,12 @@ always @(posedge clk)
         default:    jmp <= 0;
         endcase
 
+/*
+ * indirect bit. Does 16 bit indirected
+ * addresses. Needs to be cleared when 
+ * used in ABS1 state, otherwise, it will
+ * continue to loop indirections.
+ */
 always @(posedge clk)
     if( sync )
         case( DB )
@@ -311,6 +331,16 @@ always @(posedge clk)
         endcase
     else if( state == ABS1 )
         ind <= 0;
+
+/*
+ * zpy: use Y register as offset 
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hB1:  zpy <= 1;               // LDA (ZP),Y
+        default:    zpy <= 0;
+        endcase
 
 always @(posedge clk)
     case( state )
@@ -328,7 +358,9 @@ always @(posedge clk)
                 8'h06:  state <= ZERO;      // ASL ZP
                 8'hA5:  state <= ZERO;      // LDA ZP
                 8'hB5:  state <= ZERO;      // LDA ZP,X
-                8'hB1:  state <= IND0;      // LDA (ZERO),Y
+                8'hA1:  state <= IND0;      // LDA (ZP,X)
+                8'hB2:  state <= IND0;      // LDA (ZP)
+                8'hB1:  state <= IND0;      // LDA (ZP),Y
                 8'hA9:  state <= IMM0;      // LDA #IMM0
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
