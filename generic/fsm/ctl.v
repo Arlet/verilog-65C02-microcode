@@ -162,6 +162,8 @@ assign sync = (state == SYNC);
  */
 reg rmw, jmp, ind, add_x, add_y, ld;
 reg [1:0] dst;
+reg [3:0] src;
+reg [6:0] alu;
 
 /*
  * write enable 
@@ -227,7 +229,7 @@ always @(*)
         ABS1: if( add_x )      reg_op = 7'b0_00_0000; // X
               else if( add_y ) reg_op = 7'b0_00_0001; // Y
               else             reg_op = 7'b0_00_0111; // Z
-        SYNC:                  reg_op = { ld, dst, 4'b0111 }; // dst <= Z <op> M
+        SYNC:                  reg_op = { ld, dst, src }; // dst <= src <op> M
      default:                  reg_op = 7'b0_00_0111; // Z
     endcase
 
@@ -263,7 +265,7 @@ always @(*)
         RTI1:    alu_op = 9'b00_00_100_01;  // + 1
         RTI2:    alu_op = 9'b00_00_100_01;  // + 1
         IMM0:    alu_op = 9'b10_00_000_00;  // load M
-        SYNC:    alu_op = 9'b00_00_011_00;  // Z + M
+        SYNC:    alu_op = {2'b00, alu };    // perform ALU operation
         BACK:    alu_op = 9'b10_00_000_00;  // load M
         default: alu_op = 9'bxx_xx_xxx_xx;   
     endcase
@@ -390,6 +392,32 @@ always @(posedge clk)
             8'hB6:  ld <= 1;                // LDX ZP,Y
             8'hA0:  ld <= 1;                // LDY #IMM
             8'hA2:  ld <= 1;                // LDX #IMM
+            8'hCA:  ld <= 1;                // DEX 
+            8'hE8:  ld <= 1;                // INX
+        endcase
+
+/*
+ * src: select source register 
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hB1:  src <= 7;               // LDA (ZP),Y
+            8'hB2:  src <= 7;               // LDA (ZP)
+            8'hA1:  src <= 7;               // LDA (ZP,X)
+            8'hA5:  src <= 7;               // LDA ZP
+            8'hA9:  src <= 7;               // LDA #IMM
+            8'hB5:  src <= 7;               // LDA ZP,X
+            8'hAD:  src <= 7;               // LDA ABS 
+            8'hBD:  src <= 7;               // LDA ABS,X
+            8'hB9:  src <= 7;               // LDA ABS,Y
+
+            8'hA2:  src <= 7;               // LDX #IMM 
+            8'hB6:  src <= 7;               // LDX ZP,Y
+            8'hCA:  src <= 0;               // DEX 
+            8'hE8:  src <= 0;               // INX
+
+            8'hA0:  src <= 7;               // LDY #IMM 
         endcase
 
 /*
@@ -410,8 +438,34 @@ always @(posedge clk)
 
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
+            8'hCA:  dst <= 0;               // DEX 
+            8'hE8:  dst <= 0;               // INX
 
             8'hA0:  dst <= 1;               // LDY #IMM 
+        endcase
+
+/*
+ * alu: select ALU operation 
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hB1:  alu <= 7'b00_011_00;    // LDA (ZP),Y
+            8'hB2:  alu <= 7'b00_011_00;    // LDA (ZP)
+            8'hA1:  alu <= 7'b00_011_00;    // LDA (ZP,X)
+            8'hA5:  alu <= 7'b00_011_00;    // LDA ZP
+            8'hA9:  alu <= 7'b00_011_00;    // LDA #IMM
+            8'hB5:  alu <= 7'b00_011_00;    // LDA ZP,X
+            8'hAD:  alu <= 7'b00_011_00;    // LDA ABS 
+            8'hBD:  alu <= 7'b00_011_00;    // LDA ABS,X
+            8'hB9:  alu <= 7'b00_011_00;    // LDA ABS,Y
+            8'hA2:  alu <= 7'b00_011_00;    // LDX #IMM 
+            8'hB6:  alu <= 7'b00_011_00;    // LDX ZP,Y
+            8'hA0:  alu <= 7'b00_011_00;    // LDY #IMM 
+
+            8'hCA:  alu <= 7'b00_101_00;    // DEX 
+            8'hE8:  alu <= 7'b00_100_01;    // INX
+        default:    alu <= 7'b11_111_11;    // don't care
         endcase
 
 always @(posedge clk)
