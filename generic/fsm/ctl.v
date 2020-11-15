@@ -403,6 +403,7 @@ always @(posedge clk)
             8'hCA:  ld <= 1;                // DEX 
             8'hE8:  ld <= 1;                // INX
             8'h68:  ld <= 1;                // PLA
+            8'h69:  ld <= 1;                // ADC #IMM 
         endcase
 
 /*
@@ -439,6 +440,7 @@ always @(posedge clk)
             8'hA0:  src <= 7;               // LDY #IMM 
             8'hE6:  src <= 5;               // INC ZP
             8'hEE:  src <= 5;               // INC ABS 
+            8'h69:  src <= 2;               // ADC #IMM 
         endcase
 
 /*
@@ -457,6 +459,7 @@ always @(posedge clk)
             8'hBD:  dst <= 2;               // LDA ABS,X
             8'hB9:  dst <= 2;               // LDA ABS,Y
             8'h68:  dst <= 2;               // PLA
+            8'h69:  dst <= 2;               // ADC #IMM
 
             8'hA2:  dst <= 0;               // LDX #IMM 
             8'hB6:  dst <= 0;               // LDX ZP,Y
@@ -493,6 +496,8 @@ always @(posedge clk)
             
             8'h48:  alu <= 7'b00_011_00;    // PHA
             8'h68:  alu <= 7'b00_011_00;    // PLA
+
+            8'h69:  alu <= 7'b00_011_11;    // ADC #IMM
         default:    alu <= 7'b11_111_11;    // don't care
         endcase
 
@@ -523,6 +528,7 @@ always @(posedge clk)
                 8'hA9:  state <= IMM0;      // LDA #IMM
                 8'hA0:  state <= IMM0;      // LDY #IMM
                 8'hA2:  state <= IMM0;      // LDX #IMM
+                8'h69:  state <= IMM0;      // ADC #IMM
                 8'h48:  state <= PUSH;      // PUSH
                 8'h68:  state <= PULL;      // PULL
                 8'hE6:  state <= ZERO;      // INC ZP
