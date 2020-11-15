@@ -149,7 +149,8 @@ parameter
     RTI0  = 6'd24,
     RTI1  = 6'd25,
     RTI2  = 6'd26,
-    RTI3  = 6'd27
+    RTI3  = 6'd27,
+    COND  = 6'd28
     ;
 
 reg [5:0] state = INIT;
@@ -234,17 +235,17 @@ always @(*)
  */
 always @(*)
     case( state )
-        BRK0:    alu_op = 9'b00_00_101_00;  // S
-        BRK1:    alu_op = 9'b00_00_101_00;  // S
-        BRK2:    alu_op = 9'b00_00_101_00;  // S
-        JSR0:    alu_op = 9'b00_00_101_00;  // S
-        JSR1:    alu_op = 9'b00_00_101_00;  // S
-        RTS0:    alu_op = 9'b00_00_100_01;  // S
-        RTS1:    alu_op = 9'b00_00_100_01;  // S
-        RTI0:    alu_op = 9'b00_00_100_01;  // S
-        RTI1:    alu_op = 9'b00_00_100_01;  // S
-        RTI2:    alu_op = 9'b00_00_100_01;  // S
-        default: alu_op = 9'bxx_xx_xxx_xx;  // zero
+        BRK0:    alu_op = 9'b00_00_101_00;  // - 1 
+        BRK1:    alu_op = 9'b00_00_101_00;  // - 1 
+        BRK2:    alu_op = 9'b00_00_101_00;  // - 1 
+        JSR0:    alu_op = 9'b00_00_101_00;  // - 1 
+        JSR1:    alu_op = 9'b00_00_101_00;  // - 1 
+        RTS0:    alu_op = 9'b00_00_100_01;  // + 1 
+        RTS1:    alu_op = 9'b00_00_100_01;  // + 1 
+        RTI0:    alu_op = 9'b00_00_100_01;  // + 1
+        RTI1:    alu_op = 9'b00_00_100_01;  // + 1
+        RTI2:    alu_op = 9'b00_00_100_01;  // + 1
+        default: alu_op = 9'bxx_xx_xxx_xx;   
     endcase
 
 always @(*)
@@ -276,6 +277,7 @@ always @(*)
         BRK1:   mode = 8;
         BRK2:   mode = 8;
         BRK3:   mode = 15;
+        COND:   mode = 7;
     endcase
 
 reg rmw, jmp, ind;
@@ -303,7 +305,6 @@ always @(posedge clk)
 always @(posedge clk)
     if( sync )
         case( DB )
-            8'h00:  ind <= 0;
             8'h6c:  ind <= 1;
             8'h7c:  ind <= 1;
         default:    ind <= 0;
@@ -316,6 +317,7 @@ always @(posedge clk)
         INIT:   state <= SYNC;
         SYNC:   
             case( DB )
+                8'h80:  state <= COND;      // BRA
                 8'h00:  state <= BRK0;      // BRK
                 8'h20:  state <= JSR0;      // JSR
                 8'h40:  state <= RTI0;      // RTI
@@ -357,6 +359,7 @@ always @(posedge clk)
         RTI1:   state <= RTI2;
         RTI2:   state <= RTI3;
         RTI3:   state <= SYNC;
+        COND:   state <= SYNC;
     endcase
 
 `ifdef SIM
@@ -392,6 +395,7 @@ always @(*)
         RTI1: statename = "RTI1";
         RTI2: statename = "RTI2";
         RTI0: statename = "RTI3";
+        COND: statename = "COND";
     endcase
 `endif
 
