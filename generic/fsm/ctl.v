@@ -394,8 +394,8 @@ always @(posedge clk)
             8'hCA:  ld <= 1;                // DEX 
             8'hE8:  ld <= 1;                // INX
             8'h68:  ld <= 1;                // PLA
-     8'b000?_??01:  ld <= 1;                // ORA *
-     8'b000?_0010:  ld <= 1;                // ORA (ZP)
+     8'b0???_??01:  ld <= 1;                // ORA/AND/EOR/ADC 
+     8'b0???_0010:  ld <= 1;                // ORA/AND/EOR/ADC (ZP) 
      8'b100?_??01:  ld <= 1;                // LDA *
      8'b100?_0010:  ld <= 1;                // LDA (ZP) 
      8'b111?_??01:  ld <= 1;                // SBC *
