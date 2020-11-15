@@ -221,6 +221,7 @@ always @(*)
         ABS1: if( add_x )      reg_op = 7'b0_00_0000; // X
               else if( add_y ) reg_op = 7'b0_00_0001; // Y
               else             reg_op = 7'b0_00_0111; // Z
+        SYNC:                  reg_op = { ld, 6'b10_0111 }; // A <= Z <op> M
      default:                  reg_op = 7'b0_00_0111; // Z
     endcase
 
@@ -255,6 +256,9 @@ always @(*)
         RTI0:    alu_op = 9'b00_00_100_01;  // + 1
         RTI1:    alu_op = 9'b00_00_100_01;  // + 1
         RTI2:    alu_op = 9'b00_00_100_01;  // + 1
+        IMM0:    alu_op = 9'b10_00_000_00;  // load M
+        SYNC:    alu_op = 9'b00_00_011_00;  // Z + M
+        BACK:    alu_op = 9'b10_00_000_00;  // load M
         default: alu_op = 9'bxx_xx_xxx_xx;   
     endcase
 
@@ -293,7 +297,7 @@ always @(*)
 /* 
  * loose state flops
  */
-reg rmw, jmp, ind, add_x, add_y;
+reg rmw, jmp, ind, add_x, add_y, ld;
 
 /*
  * read-modify-write bit. When set, it means
@@ -365,6 +369,23 @@ always @(posedge clk)
         endcase
     else if( state == ABS1 )                // for JMP (IND,X)
         add_x <= 0;
+
+/*
+ * ld: load a register at the end of instruction
+ */
+always @(posedge clk)
+    if( sync )
+        case( DB )
+            8'hB1:  ld <= 1;                // LDA (ZP),Y
+            8'hB2:  ld <= 1;                // LDA (ZP)
+            8'hA1:  ld <= 1;                // LDA (ZP,X)
+            8'hA5:  ld <= 1;                // LDA ZP
+            8'hA9:  ld <= 1;                // LDA #IMM
+            8'hB5:  ld <= 1;                // LDA ZP,X
+            8'hAD:  ld <= 1;                // LDA ABS 
+            8'hBD:  ld <= 1;                // LDA ABS,X
+            8'hB9:  ld <= 1;                // LDA ABS,Y
+        endcase
 
 always @(posedge clk)
     case( state )
