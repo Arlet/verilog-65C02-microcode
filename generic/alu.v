@@ -34,6 +34,21 @@ wire ld_m = op[8];
 wire adj_m = op[7];
 
 /*
+ * distinguish ADC/SBC, not valid when doing
+ * other operations.
+ */
+wire SBC = op[4];
+
+/* 
+ * are we using BCD style carry ?
+ */
+reg bcd_carry;
+
+always @(posedge clk)
+    if( rdy )
+        bcd_carry <= !sync & adj_m;
+
+/*
  * ALU carry in and shift in
  */
 always @(*)
@@ -41,7 +56,7 @@ always @(*)
         2'b00:      {SI, CI} = 2'b00;
         2'b01:      {SI, CI} = 2'b01;
         2'b10:      {SI, CI} = {C, 1'b0};
-        2'b11:      {SI, CI} = {1'b0, C};
+        2'b11:      {SI, CI} = {1'b0, (C & !bcd_carry) | (bcd_carry & SBC) };
     endcase
 
 /*   
@@ -98,12 +113,6 @@ always @(*)
         3'b110: adder = (AI + NB)    + CI;
         3'b111: adder = (BI & NA)    + CI;
     endcase
-
-/*
- * distinguish ADC/SBC, not valid when doing
- * other operations.
- */
-wire SBC = op[4];
 
 /*
  * intermediate borrow/carry bits. The number indicates 
@@ -192,26 +201,13 @@ always @(posedge clk)
     if( rdy )
         CO1 <= CO;
 
-/* 
- * are we using BCD style carry ?
- */
-reg bcd_carry;
-
-always @(posedge clk)
-    if( rdy )
-        bcd_carry <= !sync & adj_m;
-
 always @(posedge clk)
     if( sync & rdy )
-        casez( flag_op[1:0] )
-            2'b01,
-            2'b10,
-            2'b11 : 
-                if( bcd_carry )
-                    C <= (CO & !SBC) | CO1;  
-                else
-                    C <= CO;  
-        endcase
+        if( flag_op[1] )
+            if( bcd_carry )
+                C <= (CO & !SBC) | CO1;  
+            else
+                C <= CO;  
 
 /*
  * update N(egative) flag and Z(ero) flag
