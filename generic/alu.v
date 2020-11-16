@@ -182,7 +182,7 @@ always @(posedge clk)
 wire plp = flag_op[2];
 
 /*
- * the alu_co_1 signal is the ALU carry out, delayed
+ * the CO1 signal is the ALU carry out, delayed
  * by one cycle. This is because the BCD instructions
  * can generate a carry in the main cycle or the adjust
  * cycle.
@@ -192,12 +192,25 @@ always @(posedge clk)
     if( rdy )
         CO1 <= CO;
 
+/* 
+ * are we using BCD style carry ?
+ */
+reg bcd_carry;
+
+always @(posedge clk)
+    if( rdy )
+        bcd_carry <= !sync & adj_m;
+
 always @(posedge clk)
     if( sync & rdy )
         casez( flag_op[1:0] )
-            2'b01 : C <= CO1;               // delayed carry for SBC
-            2'b10 : C <= CO | CO1;          // BCD carry for ADC
-            2'b11 : C <= CO;                // ALU carry out 
+            2'b01,
+            2'b10,
+            2'b11 : 
+                if( bcd_carry )
+                    C <= (CO & !SBC) | CO1;  
+                else
+                    C <= CO;  
         endcase
 
 /*
