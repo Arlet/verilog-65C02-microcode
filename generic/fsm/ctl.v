@@ -516,23 +516,23 @@ always @(posedge clk)
              8'hE1: control <= 30'b10_1010011011_01_x0_00_110_11_1_10_0010; // SBC (ZP,X)
              8'hE4: control <= 30'b00_1000011011_00_00_00_110_01_0_xx_0000; // CPX ZP
              8'hE5: control <= 30'b10_1010011011_00_00_00_110_11_1_10_0010; // SBC ZP
-             8'hE6: control <= 30'b00_1000011000_00_10_00_011_00_0_xx_0101; // INC ZP
+             8'hE6: control <= 30'b00_1000011000_00_10_00_011_01_0_xx_0111; // INC ZP
              8'hE8: control <= 30'bx0_1000011000_xx_x0_00_100_01_1_00_0000; // INX
              8'hE9: control <= 30'b10_1010011011_xx_x0_00_110_11_1_10_0010; // SBC #IMM
              8'hEA: control <= 30'bx0_0000000000_xx_x0_xx_xxx_xx_0_xx_xxxx; // NOP
              8'hEC: control <= 30'b00_1000011011_00_00_00_110_01_0_xx_0000; // CPX ABS
              8'hED: control <= 30'b10_1010011011_00_00_00_110_11_1_10_0010; // SBC ABS
-             8'hEE: control <= 30'b00_1000011000_00_10_00_011_00_0_xx_0101; // INC ABS
+             8'hEE: control <= 30'b00_1000011000_00_10_00_011_01_0_xx_0111; // INC ABS
              8'hF0: control <= 30'bx0_0000000000_xx_x0_xx_xxx_xx_0_xx_xxxx; // BEQ
              8'hF1: control <= 30'b10_1010011011_10_x0_00_110_11_1_10_0010; // SBC (ZP),Y
              8'hF2: control <= 30'b10_1010011011_00_x0_00_110_11_1_10_0010; // SBC (ZP)
              8'hF5: control <= 30'b10_1010011011_01_00_00_110_11_1_10_0010; // SBC ZP,X
-             8'hF6: control <= 30'bx0_1000011000_01_10_00_011_00_0_xx_0101; // INC ZP,X
+             8'hF6: control <= 30'bx0_1000011000_01_10_00_011_01_0_xx_0111; // INC ZP,X
              8'hF8: control <= 30'bx0_0001000000_xx_x0_xx_xxx_xx_0_xx_xxxx; // SED
              8'hF9: control <= 30'b10_1010011011_10_00_00_110_11_1_10_0010; // SBC ABS,Y
              8'hFA: control <= 30'bx0_1000011000_xx_x0_00_000_00_1_00_0111; // PLX
              8'hFD: control <= 30'b10_1010011011_01_00_00_110_11_1_10_0010; // SBC ABS,X
-             8'hFE: control <= 30'b00_1000011000_01_10_00_011_00_0_xx_0101; // INC ABS,X
+             8'hFE: control <= 30'b00_1000011000_01_10_00_011_01_0_xx_0111; // INC ABS,X
            default: control <= 30'bxx_xxxxxxxxxx_xx_xx_xx_xxx_xx_x_xx_xxxx;
         endcase
 
