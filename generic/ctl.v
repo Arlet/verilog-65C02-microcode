@@ -210,6 +210,7 @@ wire [3:0] mode = control[27:24];
  * 1010 |  keep  |  DB  | {DB, AHL + XYZ} + 1
  * 1011 |   AB   | keep | {01, SP}
  * 1100 |  keep  |  DB  | AB + 1
+ * 1110 | AB + 1 |  DB  | {DB, AHL + XYZ} + 1
  * 1111 |  keep  | keep | { FF, VECTOR } + 1
  *  |||
  *  |++----> mode bits [1:0] go directly into ABL mux selection
@@ -236,6 +237,7 @@ always @(*)
         4'b1010:                ab_op = { 7'b001_1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG}, keep PC
         4'b1011:                ab_op = { 7'b010_0001, abl_sel, 2'b00, abl_ci };  // {01, SP}
         4'b1100:                ab_op = { 7'b001_0110, abl_sel, 2'b11, abl_ci };  // AB+1, keep PC
+        4'b1110:                ab_op = { 7'b111_1110, abl_sel, 2'b01, abl_ci };  // {DB, AHL+REG} + 1, store PC
         4'b1111:                ab_op = { 7'b000_0011, abl_sel, 2'b00, abl_ci };  // {FF, REG} + 1
         default:                ab_op = { 7'bxxx_xxxx, abl_sel, 2'bxx, abl_ci };  // avoid latches
     endcase

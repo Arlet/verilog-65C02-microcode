@@ -17,8 +17,8 @@ initial begin
     regs[1]  = 3;                       // Y register 
     regs[2]  = 8'h41;                   // A register
     regs[3]  = 8'hff;                   // S register
-    regs[4]  = 8'hfe;                   // obsolete
-    regs[5]  = 8'h01;                   // for INC
+    regs[4]  = 8'h00;                   // always zero
+    regs[5]  = 8'h01;                   // always zero 
     regs[6]  = 8'hff;                   // for DEC
     regs[7]  = 8'h00;                   // Z register, always zero
     regs[8]  = 8'hf9;                   // NMI - 1
