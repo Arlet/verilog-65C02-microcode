@@ -2,6 +2,7 @@
 A verilog model of the 65C02 CPU designed to fit in tiny space on FPGA. The code is completely
 rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx Spartan 6.  
 
+
 # Block diagram
 
 ![Image of block diagram](http://ladybug.xs4all.nl/arlet/fpga/6502/schematic.png)
