@@ -125,6 +125,8 @@ wire BC8 = SBC ^ adder[8];
 /* 
  * BCD adjust for each of the 2 nibbles
  */
+wire adjl;
+wire adjh;
 assign adjl = BC4 | adder[3:1] >= 5;
 assign adjh = BC8 | adder[7:5] >= 5 | ((adder[7:4] == 9) & (adder[3:1] >= 5));
 
