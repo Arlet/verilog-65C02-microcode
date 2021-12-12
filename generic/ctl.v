@@ -79,7 +79,7 @@ microcode rom(
  * taken.
  */
 reg nmi1;
-reg take_nmi;
+reg take_nmi = 0;
 
 always @(posedge clk)
     nmi1 <= nmi;

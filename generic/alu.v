@@ -24,7 +24,7 @@ module alu(
 );
 
 reg CO, CO1;
-reg N, V, D, I, Z, C;                   // processor status flags 
+reg N, V, D=0, I, Z, C;                   // processor status flags 
 assign P = { N, V, 1'b1, B, D, I, Z, C };
 
 reg [7:0] M;
