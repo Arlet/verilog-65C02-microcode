@@ -1,31 +1,31 @@
 /*
  * ALU operation:
  * ========================
- * 00---  1 pass
- * 01---  1 M
- * 10---  1 left
- * 11---  1 right
+ * 00---  pass
+ * 01---  M
+ * 10---  left
+ * 11---  right
  * ========================
- * --000  1 R | M      OR
- * --001  1 R & M      AND
- * --010  1 R ^ M      EOR
- * --011  1 R + M      ADC
- * --100  1 R + 0      R or INC depending on CI
- * --101  1 R - 1      R or DEC depending on CI
- * --110  1 R - M      SBC/CMP
- * --111  1~R & M      TRB
+ * --000  R | M      OR
+ * --001  R & M      AND
+ * --010  R ^ M      EOR
+ * --011  R + M      ADC
+ * --100  R + 0      R or INC depending on CI
+ * --101  R - 1      R or DEC depending on CI
+ * --110  R - M      SBC/CMP
+ * --111  R & M      TRB
  *
  */
 
 /*
- *  1                        next[2:0]
- * us  1                     carry out      ci
- * ---------  1              -------        --
- * 00  1 SYNC                000 keep       00 = 0
- * 01  1 NEXT                001 0          01 = 1
- * 11  1 SAVE + NEXT         010 1          10 = C
- * 10  1 LOAD                011 ALU
- *  1                        1xx PLP
+ *                           next[2:0]
+ * us                        carry out      ci
+ * ---------                 -------        --
+ * 00  | SYNC                000 keep       00 = 0
+ * 01  | NEXT                001 0          01 = 1
+ * 11  | SAVE + NEXT         010 1          10 = C
+ * 10  | LOAD                011 ALU
+ *                           1xx PLP
  *
  */
 
