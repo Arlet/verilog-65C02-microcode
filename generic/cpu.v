@@ -31,17 +31,23 @@ assign AD = {ADH, ADL};
 wire [7:0] DB = DI;                     // data bus (alias for DB)
 
 /*
- * Address Bus signals 
+ * Address Bus signals. The 'ctl' module generates a 12 bit vector
+ * of control signals for the address bus.  Here we split that up 
+ * into individual control signals.
  */
 
-wire [11:0] ab_op;
+wire [11:0] ab_op;                      // signal from ctl
 wire inc_pc = ab_op[11];                // set if PC needs increment
-wire pcl_co;                            // carry out from PCL
 wire ld_pc = ab_op[10];                 // load enable for PC 
 wire ld_ahl = ab_op[9];                 // load enable for AHL
 wire [3:0] abh_op = ab_op[8:5];         // ABH operation
 wire [3:0] abl_op = ab_op[4:1];         // ABL operation
 wire abl_ci = ab_op[0];                 // ABL carry in
+
+/*
+ * additional signals related to address bus
+ */
+wire pcl_co;                            // carry out from PCL
 wire abl_co;                            // ABL carry out
 wire abh_ci = abl_co;
 
@@ -67,11 +73,11 @@ wire D = P[3];                          // take out D for controller
  * Register file signals
  */
 
-wire [6:0] reg_op;
-wire [7:0] R;
+wire [6:0] reg_op;                      // the register index 
+wire [7:0] R;                           // register file output for selected reg
 
 /*
- * Register file 
+ * Register file. The registers are only written by ALU output.  
  */
 regfile regfile(
     .clk(clk),
@@ -84,35 +90,35 @@ regfile regfile(
  * ABL (Address Bus Low) logic
  */
 abl abl(
-    .clk(clk),
-    .rdy(RDY),
-    .CI(abl_ci),
-    .CO(abl_co),
-    .cond(cond),
-    .op(abl_op),
-    .ld_ahl(ld_ahl),
-    .ld_pc(ld_pc),
-    .inc_pc(inc_pc),
-    .pcl_co(pcl_co),
-    .PCL(PCL),
-    .ADL(ADL),
-    .DB(DB),
-    .REG(R)
+    .clk(clk),                          //
+    .rdy(RDY),                          //
+    .CI(abl_ci),                        // carry in 
+    .CO(abl_co),                        // carry from low -> high byte 
+    .cond(cond),                        // condition status for branches
+    .op(abl_op),                        // ABL operation
+    .ld_ahl(ld_ahl),                    // signal to load 'AHL' register
+    .ld_pc(ld_pc),                      // signal to load 'PC' register
+    .inc_pc(inc_pc),                    // signal to increment PC
+    .pcl_co(pcl_co),                    // carry from low -> high PC
+    .PCL(PCL),                          // PC low byte
+    .ADL(ADL),                          // Address bus low byte
+    .DB(DB),                            // data bus
+    .REG(R)                             // output from register file 
 );
 
 /*
  * ABH (Address Bus High) logic
  */
 abh abh(
-    .clk(clk),
-    .rdy(RDY),
-    .CI(abh_ci),
-    .op(abh_op) ,
-    .ld_pc(ld_pc),
-    .inc_pc(pcl_co),
-    .ADH(ADH),
-    .PCH(PCH),
-    .DB(DB)
+    .clk(clk),                          //
+    .rdy(RDY),                          //
+    .CI(abh_ci),                        // carry in from ABL
+    .op(abh_op) ,                       // ABH operation
+    .ld_pc(ld_pc),                      // signal to load PC
+    .inc_pc(pcl_co),                    // signal to increment PC connected to carry out
+    .ADH(ADH),                          // address bus high byte
+    .PCH(PCH),                          // PC high byte
+    .DB(DB)                             // data bus
 );
 
 /*
