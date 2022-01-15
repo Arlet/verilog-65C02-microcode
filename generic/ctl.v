@@ -36,34 +36,41 @@
  */
 
 module ctl(
-    input clk,
-    input irq,
-    input rdy,
-    input nmi,
-    input reset,
-    output sync,
-    input cond,
-    input [7:0] DB,
-    output reg WE,
-    output [9:0] flag_op,
-    output [8:0] alu_op,
-    output [6:0] reg_op,
-    output [1:0] do_op,
-    output ld_m,
-    input I,
-    input D,
-    output B,
-    output reg [11:0] ab_op );
+    input clk,                          // global clock
+    input irq,                          // top level IRQ input
+    input rdy,                          // top level RDY input
+    input nmi,                          // top level NMI input
+    input reset,                        // top level RESET input
+    output sync,                        // asserted at first cycle of instruction
+    input cond,                         // branch condition code status 
+    input [7:0] DB,                     // Data Bus
+    output reg WE,                      // Write Enable signal
+    output [9:0] flag_op,               // operation select for flags
+    output [8:0] alu_op,                // operation select for ALU 
+    output [6:0] reg_op,                // operation select for register file
+    output [1:0] do_op,                 // operation select for data bus output
+    output ld_m,                        // load enable for M register
+    input I,                            // IRQ enable flag
+    input D,                            // Decimal flag 
+    output B,                           // BRK flag
+    output reg [11:0] ab_op );          // operation select for address bus output 
 
+/*
+ * 'control' is a 32 bit vector from the microcode memory
+ */
 wire [31:0] control;
 
+/*
+ * pick apart control word for individual module control signals. Note that some
+ * bits can be used for different purposes, depending on context
+ */
 assign do_op = control[30:29];
 assign flag_op = {control[30:29], control[7:0]};
 assign alu_op = {control[31:30], control[14:8]};
 assign reg_op = control[21:15];
 
-reg [8:0] pc;
-reg [4:0] finish;   // finishing code
+reg [8:0] pc;                           // microcode program counter
+reg [4:0] finish;                       // address of finishing code for current instruction
 
 microcode rom(
     .clk(clk),
