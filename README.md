@@ -5,7 +5,7 @@ rewritten from scratch optimized for 6-input LUTs, specifically targeting Xilinx
 
 # Block diagram
 
-![Image of block diagram](http://ladybug.xs4all.nl/arlet/fpga/6502/schematic.png)
+![Image of block diagram](http://c-scape.nl/arlet/fpga/6502/schematic.png)
 
 Unlike my previous verilog-6502, this core supports both asynchronous and synchronous memories. In order
 to do that, the top-level "AD" signal represents the *next* address. When using external asynchronous memory,
