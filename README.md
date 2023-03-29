@@ -94,7 +94,7 @@ Add 1 cycle for any read-modify-write. There is no extra cycle for taken branche
 ### Example waveform
 Here's an example of the 65C02 core taking a reset, loading the reset vector, and jumping to test code at $F800, where it does INX in a loop.
 
-![Example waveform](http://c-scape.nl/arlet/fpga/6502/waveform.png)
+![Example waveform](http://c-scape.nl/arlet/fpga/6502/waveform.png?)
 
 
 Have fun. 
